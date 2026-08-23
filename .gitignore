@@ -1,0 +1,24 @@
+# Large/regenerable pipeline artifacts — do not commit CT data, checkpoints, or run outputs
+spiral_datasets/
+checkpoints/
+runbook/out/
+*.zarr
+*.tif
+*.tiff
+*.dbm
+
+# Vendored maintainer repo (cloned by runbook/02_env_setup.sh, not ours to commit)
+villa/
+
+# Python / uv
+.venv/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+
+# Secrets
+.env
+.env.*
+!.env.example
