@@ -12,7 +12,7 @@ set -euo pipefail
 : "${SCROLL:?SCROLL required — the target scroll, for output pathing}"
 : "${CHECKPOINT:?CHECKPOINT required}"
 CONTROL_SEGMENT="${CONTROL_SEGMENT:?set CONTROL_SEGMENT to a curated positive-control tifxyz path with published ground-truth ink labels}"
-CONTROL_VOLUME_ZARR="${CONTROL_VOLUME_ZARR:?set CONTROL_VOLUME_ZARR to that control scroll's OME-Zarr}"
+CONTROL_VOLUME_ZARR="${CONTROL_VOLUME_ZARR:?set CONTROL_VOLUME_ZARR to the control scroll OME-Zarr path}"
 VILLA_DIR="${VILLA_DIR:-villa}"
 OUT_DIR="$(pwd)/analysis/control-$SCROLL"
 mkdir -p "$OUT_DIR"

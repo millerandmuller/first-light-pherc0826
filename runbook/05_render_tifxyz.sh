@@ -18,7 +18,7 @@ mkdir -p "$OUT_DIR"
 # bucket once the scroll pick (F1) and voxel size are confirmed — see
 # runbook/01_scroll_selection.md. Placeholder path below WILL fail; that is
 # intentional (fail loud, don't silently render the wrong volume).
-VOLUME_ZARR="${VOLUME_ZARR:?set VOLUME_ZARR to the scroll's s3://vesuvius-challenge-open-data/... zarr path from F1}"
+VOLUME_ZARR="${VOLUME_ZARR:?set VOLUME_ZARR to the target s3://vesuvius-challenge-open-data/... zarr path from F1}"
 
 vc_render_tifxyz \
   --volume "$VOLUME_ZARR" \
