@@ -7,6 +7,16 @@
 # (F1). The tutorial default config assumes an umbilicus is present in the dataset
 # dir; if ours is community-annotated or hand-produced, confirm its path matches
 # what fit_spiral.py expects before running this for real.
+#
+# Fix (examiner_report.md P1, verified live 2026-08-23 against
+# https://dl.ash2txt.org/datasets/spiral_datasets/PHerc0826/ — the real
+# remote layout nests one timestamped folder under each scroll, e.g.
+# spiral_datasets/PHerc0826/20250821151701/tracks/, not tracks/ directly
+# under spiral_datasets/PHerc0826/. make fetch-dataset's rclone mirrors that
+# nesting locally, so --dataset must point at the timestamped subfolder, not
+# the scroll root. Discovered dynamically below rather than hardcoded, since
+# every one of the 9 candidates in runbook/01_scroll_selection.md has exactly
+# one such subfolder, and the exact timestamp differs per scroll.
 set -euo pipefail
 
 : "${SCROLL:?SCROLL required}"
@@ -14,7 +24,20 @@ set -euo pipefail
 : "${Z_END:?Z_END required}"
 : "${RUN_TAG:?RUN_TAG required}"
 VILLA_DIR="${VILLA_DIR:-villa}"
-DATASET_DIR="$(pwd)/spiral_datasets/$SCROLL"
+DATASET_ROOT="$(pwd)/spiral_datasets/$SCROLL"
+if [ ! -d "$DATASET_ROOT" ]; then
+  echo "No dataset found at $DATASET_ROOT — run 'make fetch-dataset SCROLL=$SCROLL' first." >&2
+  exit 1
+fi
+# 'find | head' under set -e/pipefail would otherwise abort the script
+# silently (no message) if find fails for any reason after the root check
+# above passes — verified empirically, this is not a hypothetical. The
+# `|| true` is a required safety net, not decoration.
+DATASET_DIR=$(find "$DATASET_ROOT" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | head -1) || true
+if [ -z "$DATASET_DIR" ]; then
+  echo "No timestamped subfolder found under $DATASET_ROOT — run 'make fetch-dataset SCROLL=$SCROLL' first." >&2
+  exit 1
+fi
 OUT_DIR="$(pwd)/runbook/out/$SCROLL/$RUN_TAG/spiral-fit"
 mkdir -p "$OUT_DIR"
 

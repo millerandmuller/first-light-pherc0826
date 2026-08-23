@@ -8,11 +8,11 @@ Entry point is the repo-root `Makefile` — run `make help`.
 | Scroll selection | `01_scroll_selection.md` | F1 | done — pick: PHerc0826, backup: PHerc0358. Umbilicus published (Discord, "sean", 2026-08-08) but NOT YET fetched/verified — Discord access is the blocker, see GAPs |
 | Provisioning (manual) | `02_provision_manual.md` | F2 | checklist written, needs your RunPod console + payment |
 | Environment setup | `02_env_setup.sh` | F2 | written, not yet run |
-| Spiral fit | `03_spiral_fit.sh` | F3 | written, not yet run — blocked on Discord umbilicus fetch + sha256 verification (see 01_scroll_selection.md GAPs) |
-| Lasagna flatten | `04_lasagna_flatten.sh` | F4 (part 1) | written, not yet run |
-| Render tifxyz | `05_render_tifxyz.sh` | F4 (part 2) | written, not yet run |
-| Ink inference | `06_ink_inference.sh` | F5 | written, not yet run |
-| Controls | `07_controls.sh` | F6 | written, not yet run — control segment still a GAP |
+| Spiral fit | `03_spiral_fit.sh` | F3 | written, not yet run — dataset-path P1 fixed (examiner_report.md); still blocked on Discord umbilicus fetch + sha256 verification (see 01_scroll_selection.md GAPs) |
+| Lasagna flatten | `04_lasagna_flatten.sh` | F4 (part 1) | written, not yet run — missing lasagna bootstrap P1 fixed |
+| Render tifxyz | `05_render_tifxyz.sh` | F4 (part 2) | written, not yet run — D-19 check dependency P1 fixed; slice-0-only sampling and dead hasattr() check deliberately left for after the box exists |
+| Ink inference | `06_ink_inference.sh` | F5 | written, not yet run — OOM-retry misdiagnosis fixed |
+| Controls | `07_controls.sh` | F6 | written, not yet run — control segment still a GAP; OOM-retry + reverse-output docs fixed to match `06` |
 
 See `pr_drafts/TEMPLATE.md` (mirrors villa's actual PR template) and
 `pr_drafts/PR_CHECKLIST.md` (pre-flight checklist) for F7; `prereg/criteria_template.md`

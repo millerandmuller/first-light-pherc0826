@@ -5,6 +5,22 @@
 # (dossier D-19, villa PR #1344): an absent --group-idx level used to render
 # an all-black TIF with exit 0. Until that PR is confirmed merged on the villa
 # commit we're pinned to, this script checks for a nonzero-pixel output itself.
+#
+# Fix (examiner_report.md P1): the sanity check below needs numpy+zarr, which
+# nothing in 02_env_setup.sh installs anywhere the box provably has them —
+# it was running as bare `python3`, so on a clean box it would crash with
+# ModuleNotFoundError before checking a single pixel, defeating the point of
+# the check. Run it via `uv run --with numpy --with zarr` instead: this is
+# the maintainers' own documented pattern for one-off Python snippets that
+# need specific packages without a project venv (tutorial5's own
+# "Post-Processing Prediction Stack" step uses the identical
+# `uv run --with numpy --with tifffile --with imagecodecs python -c ...`
+# form — verified live 2026-08-23). Depends only on uv itself, which
+# 02_env_setup.sh already requires; doesn't depend on either the
+# spiral-fitting or vesuvius venv being active.
+# The slice-0-only sampling and the dead hasattr() check (examiner_report.md
+# P2/P3) are intentionally NOT redesigned here — that's real hardware-box
+# work, deferred until the box exists.
 set -euo pipefail
 
 : "${SCROLL:?SCROLL required}"
@@ -31,7 +47,7 @@ vc_render_tifxyz \
   --zarr-output "$OUT_DIR/segment.zarr"
 
 # Sanity check against the D-19 sparse-pyramid trap: refuse an all-black render.
-python3 - "$OUT_DIR/segment.zarr" <<'PY'
+uv run --with numpy --with zarr python3 - "$OUT_DIR/segment.zarr" <<'PY'
 import sys
 import numpy as np
 import zarr
