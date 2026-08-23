@@ -3,8 +3,13 @@
 Mirrors the maintainers' own First Letters workflow, one script per step.
 Entry point is the repo-root `Makefile` — run `make help`.
 
+**Start with `00_before_you_start.md`** — hands-on checklist for RunPod
+provisioning, env vars, Discord registration, and the umbilicus fetch, with
+the exact order to run everything below.
+
 | Step | Script | Feature | Status |
 |---|---|---|---|
+| **Before you start** | `00_before_you_start.md` | F2, F1(umbilicus), F10(Discord) | checklist written, nothing executed yet |
 | Scroll selection | `01_scroll_selection.md` | F1 | done — pick: PHerc0826, backup: PHerc0358. Umbilicus published (Discord, "sean", 2026-08-08) but NOT YET fetched/verified — Discord access is the blocker, see GAPs |
 | Provisioning (manual) | `02_provision_manual.md` | F2 | checklist written, needs your RunPod console + payment |
 | Environment setup | `02_env_setup.sh` | F2 | written, not yet run |
