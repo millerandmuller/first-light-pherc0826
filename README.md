@@ -66,4 +66,14 @@ date.
 ---
 
 License: MIT (from first commit, per project_brief.md Section H — Eligibility/Compliance).
-Zero Academy components in this repo, ever (project_brief.md Section 8).
+
+## Zero Academy components, ever
+
+This repo has its own git history, separate from the private Academy workspace,
+specifically so this rule is structural, not a promise: never `git add`
+anything from `directives/`, `execution/`, `Student (Prompt Architect)/`,
+`The Examiner/`, `The Revision/`, `The Creative Director/`, `The Expert/`,
+`academy_memory/`, `.academy/`, `expert_dossier.md`, `expert_consultations.md`,
+`project_brief.md`, `examiner_report.md`, `revision_log.md`, `DECISION_LOG.md`,
+or any other Academy-orchestration file. Those describe how the team worked,
+not the scientific result, and the brief bans them from any public surface.

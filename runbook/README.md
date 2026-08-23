@@ -5,13 +5,19 @@ Entry point is the repo-root `Makefile` — run `make help`.
 
 | Step | Script | Feature | Status |
 |---|---|---|---|
-| Scroll selection | `01_scroll_selection.md` | F1 | pending F1 research |
+| Scroll selection | `01_scroll_selection.md` | F1 | not done — this file does not exist yet, being written now |
+| Provisioning (manual) | `02_provision_manual.md` | F2 | checklist written, needs your RunPod console + payment |
 | Environment setup | `02_env_setup.sh` | F2 | written, not yet run |
-| Spiral fit | `03_spiral_fit.sh` | F3 | written, not yet run |
+| Spiral fit | `03_spiral_fit.sh` | F3 | written, not yet run — blocked on F1 umbilicus resolution |
 | Lasagna flatten | `04_lasagna_flatten.sh` | F4 (part 1) | written, not yet run |
 | Render tifxyz | `05_render_tifxyz.sh` | F4 (part 2) | written, not yet run |
 | Ink inference | `06_ink_inference.sh` | F5 | written, not yet run |
 | Controls | `07_controls.sh` | F6 | written, not yet run — control segment still a GAP |
+
+See `pr_drafts/TEMPLATE.md` (mirrors villa's actual PR template) and
+`pr_drafts/PR_CHECKLIST.md` (pre-flight checklist) for F7; `prereg/criteria_template.md`
+for E4; `analysis/false_positive_audit_template.md` for F6's written audit;
+`renders/README.md` for F9.
 
 Commands inside each script are sourced from the maintainers' own tutorials
 (cited in each script's header comment), not invented. None have been run
