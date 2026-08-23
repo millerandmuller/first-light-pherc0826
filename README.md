@@ -1,4 +1,10 @@
-# First Light — PHerc. 0[TODO: scroll ID after F1]
+# First Light — PHerc. 0826
+
+> Scroll pick from F1 (`runbook/01_scroll_selection.md`), backup PHerc0358.
+> Not locked: the umbilicus is unresolved (GAP) and pivot-trigger 1 in
+> project_brief.md H.W2 allows a scroll switch before feature freeze. Update
+> this title and the [TODO]s below only once F3 actually succeeds on the
+> chosen scroll — don't let the README get ahead of the pipeline.
 
 > STRUCTURE ONLY. Every narrative section below is `[TODO: human-written]` —
 > project_brief.md Section 8 (Dealbreakers) is explicit: "No AI-written prose
