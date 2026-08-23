@@ -7,17 +7,21 @@ the concurrency incident logged in `../../DECISION_LOG.md` in the Academy
 workspace — the earlier claim that F1 "research done" was false; this is the
 real research).
 
-**Revision note:** a first pass of this file (committed, then corrected) missed
-two real umbilicus-annotation repos that a peer session's review caught. That
-review also contained two unverified/wrong specifics — the peer stated "sean"
-(the source of PHerc0125/0211/0826's reference umbilici) as being the villa
-maintainer "bruniss," and stated PHerc0826's umbilicus has "63 points." I
-fetched the actual repo and its raw `qc/sean_reference.json` directly: the
-repo never identifies who "sean" is (no surname, handle, or Discord ID stated
-anywhere), and the real point count for PHerc0826 is **49**, not 63. Both are
-corrected below. Lesson: verify a peer's specific factual claims against
-primary sources before writing them into a cite-or-GAP artifact, the same
-discipline this file already applies to search-engine summaries.
+**Revision note (two rounds):** a first pass of this file missed two real
+umbilicus-annotation repos that a peer session's review caught. That review
+also stated "sean" (source of PHerc0125/0211/0826's reference umbilici) is
+villa maintainer "bruniss," and that PHerc0826 has "63 points." I checked the
+repo's **README** and found neither claim there, and corrected both out.
+That was itself incomplete: the peer then pointed out the attribution lives
+in the raw `qc/sean_reference.json` file's own `what`/`source` metadata
+fields, not the README prose — I fetched that file directly and confirmed it
+verbatim (below). So: the point-count correction (49, not 63 — the peer's
+"63" was a misread of that file's separate `kink` field, 63.390179) stands.
+The attribution correction was wrong on my part — restored below, now
+correctly sourced to the JSON file rather than left unsourced or dropped.
+Lesson, twice over: verify a specific claim against the primary source it
+actually points to (the data file, not just the README that describes it)
+before writing it into a cite-or-GAP artifact, or striking it out.
 
 ## Candidate pool
 
@@ -69,19 +73,28 @@ Letters prize scrolls." Separately, its README states: "The other three the
 prize page lists — PHerc 0125, 0211, 0826 — already had published umbilici
 from sean, which §3 uses as the calibration reference," and: "As far as we
 can establish they exist only as the three attachments sean posted in the
-Vesuvius Challenge Discord `#general` on 2026-08-08." **"Sean" is not further
-identified anywhere in the repo** — no surname, GitHub handle, or Discord
-username is given; do not assume this is any specific named maintainer
-without independent confirmation (a peer session's review asserted this was
-villa maintainer "bruniss" — that identification is not stated anywhere in
-the repo and should be treated as unconfirmed, not repeated as fact).
-`qc/sean_reference.json` (fetched raw) records, per scroll: sha256, byte
-length, z-range, and derived point count. For PHerc0125: sha256 starting
-`458e6ecf...`, 83 points. For PHerc0826: sha256 starting `ddf2ffa2...`,
-**49 points** (not 63 — a specific number a peer session's relay got wrong;
-re-verify the hash yourself with `scripts/fetch_sean.py` before trusting any
-AI-relayed copy of it, mine included). `scripts/fetch_sean.py --from <dir>`
-verifies a locally-supplied file against these hashes.
+Vesuvius Challenge Discord `#general` on 2026-08-08." The README alone does
+not further identify "sean" — but `qc/sean_reference.json` (fetched raw,
+directly, not from a peer's summary) carries top-level metadata fields that
+do: `"what": "Derived quantities for the three published reference umbilici
+by sean (bruniss), so the smoothness comparison in README section 3 has a
+value and a provenance on a bare clone..."` and `"source": "posted by bruniss
+in the Vesuvius Challenge Discord, #general, 2026-08-08, as three file
+attachments"`. So the repo itself — via that data file, not its README prose
+— does attribute "sean" to "bruniss." This is the **community repo's
+third-party claim**, not bruniss self-identifying anywhere verifiable by us;
+treat it as sourced-but-unconfirmed-at-origin until someone on the team
+actually sees the Discord post.
+
+`qc/sean_reference.json`'s per-scroll fields, fetched raw directly (not
+relayed): PHerc0125 — sha256 `458e6ecf...`, 83 points. **PHerc0826** — sha256
+`ddf2ffa2ab91270b4ccc443d22f10587090f1c5b5561d34dfc4c838ed7a451f3`, 4379
+bytes, **49 points** (the file's separate `kink` field is 63.390179 — a
+misread of that field as a point count is where an earlier "63" came from),
+z-range 1941-16262. `scripts/fetch_sean.py --from <dir>` verifies a
+locally-supplied file against these hashes; re-derive the hash yourself
+(`sha256sum`) once the file is actually retrieved from Discord — don't take
+any AI-relayed copy of it, including this one, as the final check.
 
 **`github.com/TAUIL-Abd-Elilah/umbilicus-cross-validation`** (code: MIT;
 six manual curve JSONs + a "PHerc0358 v2 candidate": CC BY 4.0, attributed to
@@ -111,7 +124,7 @@ use the resolved key in any script, never the displayed one.
 | PHerc0358 | 20250719150703-... | 20250821151737-9.362um-1.2m-113keV-masked.zarr | 9.362um | No | Community hand-annotated, both repos (+ TAUIL preregistered v2 correction candidate) | 5.6 + 1.4 = 7.0 GiB | candidate — backup |
 | PHerc0800 | 20250510225703-... | not resolved (excluded before checking) | 8.640um | **Yes — 6 `auto_grown_*` segments** (2025-10-28/29) | n/a | not checked | **excluded** — existing public surface work fails H4's "no public ink results" requirement |
 | PHerc0813 | 20250720160015-... | 20250821151723-9.362um-1.2m-113keV-masked.zarr | 9.362um | No | Community hand-annotated (both repos) | 7.6 + 2.0 = 9.6 GiB | candidate |
-| PHerc0826 | 20250720174915-... | 20250821151701-9.362um-1.2m-113keV-masked.zarr | 9.362um | No | Published — "sean" ref, ddf2ffa2..., **49 pts** (not 63), via Discord #general 2026-08-08 (herculaneum-umbilici repo) | 5.0 + 1.4 = 6.4 GiB | **smallest of the sean-covered scrolls — top pick** |
+| PHerc0826 | 20250720174915-... | 20250821151701-9.362um-1.2m-113keV-masked.zarr | 9.362um | No | Published — "sean (bruniss)" ref per repo's own metadata, ddf2ffa2..., **49 pts**, z 1941-16262, via Discord #general 2026-08-08 (herculaneum-umbilici repo) | 5.0 + 1.4 = 6.4 GiB | **smallest of the sean-covered scrolls — top pick** |
 
 New dossier-style entries (continue `expert_dossier.md` numbering from D-26;
 not yet copied into that file — do that alongside a full re-verification pass
@@ -131,7 +144,7 @@ by reading the allowlist myself rather than taking that at face value).
 | D-28 | FACT | `github.com/JamesDarby345/Umbilicus_Maker` is a community umbilicus-annotation project, but its published files (`umbilicus_points/s1A...s4_*.json`) cover only Scroll 1-4, current "as of october 2024" per its own README — it does not cover any of the nine 2025-batch eligible scrolls. | https://github.com/JamesDarby345/Umbilicus_Maker · T2 · 2026-08-23 | "This repo provides .json files that specify umbilicus points for each of the major released scroll scans as of october 2024" | PENDING |
 | D-29 | JUDGMENT | Spiral-tracks dataset sizes (`.dbm` + `.crossings.npz`) across the eight non-excluded candidates range from about 6.4 GiB (PHerc0826) to about 14.7 GiB (PHerc0268), read off each scroll's directory listing; not a verbatim single quote, downgraded from FACT since no one sentence states this comparison. | https://dl.ash2txt.org/datasets/spiral_datasets/ (per-scroll tracks/ listings) · T2 · 2026-08-23 | n/a (JUDGMENT, no single verbatim quote applies) | n/a |
 | D-30 | FACT | `github.com/AlexeyDrobkovStrikesBack/herculaneum-umbilici` provides manual umbilicus polylines for ten of the thirteen prize scrolls, and states the other three (PHerc 0125, 0211, 0826) already had umbilici published by "sean" via Discord. | https://github.com/AlexeyDrobkovStrikesBack/herculaneum-umbilici · T2 · 2026-08-23 | "Manual umbilicus (winding-axis) polylines for ten of the thirteen First Letters prize scrolls" | PENDING |
-| D-31 | FACT | The same repo's README states sean's three reference files exist only as Discord attachments; `qc/sean_reference.json` (fetched raw) gives sha256/point-count per file — PHerc0125: 83 points; PHerc0826: 49 points. "Sean" is not otherwise identified (no surname/handle) anywhere in the repo. | https://github.com/AlexeyDrobkovStrikesBack/herculaneum-umbilici (README + raw qc/sean_reference.json) · T2 · 2026-08-23 | "As far as we can establish they exist only as the three attachments sean posted in the Vesuvius Challenge Discord #general on 2026-08-08" | PENDING |
+| D-31 | FACT | `qc/sean_reference.json`'s own `what`/`source` metadata fields (not the README) attribute the three reference umbilici to "sean (bruniss)," posted in the Vesuvius Discord `#general` on 2026-08-08 as three file attachments — a third-party claim by the community repo, not bruniss self-identifying anywhere we've directly seen. For PHerc0826: sha256 `ddf2ffa2ab91270b4ccc443d22f10587090f1c5b5561d34dfc4c838ed7a451f3`, 4379 bytes, 49 points, z 1941-16262. | https://raw.githubusercontent.com/AlexeyDrobkovStrikesBack/herculaneum-umbilici/main/qc/sean_reference.json · T2 · 2026-08-23 | "posted by bruniss in the Vesuvius Challenge Discord, #general, 2026-08-08, as three file attachments" | PENDING |
 
 ## Pick
 
@@ -139,13 +152,15 @@ by reading the allowlist myself rather than taking that at face value).
 the eight candidates with no existing public surface/ink work, standard
 9.362um voxel size (native fit for the `ink_9um` checkpoint per dossier D-24,
 no pooling step needed). It's also one of the three scrolls with an already
-published umbilicus (D-31): 49-point reference from "sean," posted as a
-Discord attachment on 2026-08-08. **This changes the F3 gate**, and makes it
-easier, not harder: instead of hand-annotating in VC3D, the gate is now
-"register in the Vesuvius Discord, retrieve sean's three attachments from
-`#general` (2026-08-08), and verify the PHerc0826 file's sha256 against
-`qc/sean_reference.json` (`ddf2ffa2...` — re-derive this yourself, don't trust
-an AI-relayed hash) before trusting it, e.g. via
+published umbilicus (D-31): 49-point reference attributed to "sean (bruniss)"
+by the community repo's own metadata, posted as a Discord attachment on
+2026-08-08. **This changes the F3 gate**, and makes it easier, not harder:
+instead of hand-annotating in VC3D, the gate is now "register in the
+Vesuvius Discord, retrieve sean's three attachments from `#general`
+(2026-08-08), and verify the PHerc0826 file's sha256
+(`ddf2ffa2ab91270b4ccc443d22f10587090f1c5b5561d34dfc4c838ed7a451f3` — re-derive
+this yourself with `sha256sum`, don't trust an AI-relayed hash, mine
+included) before trusting it, e.g. via
 `herculaneum-umbilici/scripts/fetch_sean.py --from <dir>`." VC3D hand-annotation
 is now Plan B, only if the Discord files can't be obtained or don't verify.
 Discord registration is therefore on the critical path for F3, not just for
@@ -167,13 +182,13 @@ and undercuts the bet's core claim ("nobody had walked the workflow here").
 
 ## GAPs (honest, not papered over)
 
-- **"Sean"'s identity is unconfirmed.** The herculaneum-umbilici repo never
-  states who "sean" is beyond that first name — no surname, GitHub handle, or
-  Discord username. Do not assume or assert this is any specific named villa
-  maintainer without independent confirmation (e.g. asking in Discord, or
-  checking who actually posted in `#general` on 2026-08-08 once you have
-  Discord access) — a claim to the contrary was made during review and is not
-  backed by the source.
+- **"Sean (bruniss)"'s attribution is sourced but not independently
+  confirmed.** It comes from `qc/sean_reference.json`'s own metadata fields
+  in the community repo (D-31) — a third party's claim, not something
+  bruniss has confirmed to us directly and not something we've seen the
+  original Discord post for. Worth a quick Discord check once registered
+  (who actually posted in `#general` on 2026-08-08) rather than treating a
+  community repo's attribution as beyond question.
 - **Umbilicus for PHerc0826 still requires an action, just an easier one
   than originally scoped.** It's "fetch from Discord + verify sha256," not
   "hand-annotate in VC3D" — but it's not done yet, and Discord access is a
