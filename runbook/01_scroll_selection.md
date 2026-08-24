@@ -182,6 +182,24 @@ and undercuts the bet's core claim ("nobody had walked the workflow here").
 
 ## GAPs (honest, not papered over)
 
+- **The tutorial omits `spiral-scroll.json` entirely — likely tutorial
+  drift, not a gap in our understanding.** `villa/spiral-fitting`'s actual
+  `fit_session.py` (main branch) requires a `spiral-scroll.json` file in the
+  dataset root and will not run without one (dossier D-32) — but
+  `scrollprize.org/tutorial_spiral` never mentions this file at all. See
+  `02c_f3_preflight.md` for the full schema, verified directly against the
+  source. This reads as the codebase having moved past what the tutorial
+  documents ("version 27" per a comment in `fit_session.py`), not as
+  something we misunderstood — worth a documentation PR to villa pointing
+  this out, which is exactly the kind of Progress Prize material the bet is
+  built on (dossier D-11).
+- **No eligible dataset ships a `spiral-scroll.json`.** Checked directly:
+  none of the nine candidates' `spiral_datasets/` folders contain one (same
+  method as D-27) — every team attempting this workflow on any of the
+  eligible scrolls hits this same wall. Candidate for a villa issue, not
+  just a documentation PR: either the tutorial needs updating, or the
+  eligible-scroll datasets are missing a file their own tooling now
+  requires.
 - **"Sean (bruniss)"'s attribution is sourced but not independently
   confirmed.** It comes from `qc/sean_reference.json`'s own metadata fields
   in the community repo (D-31) — a third party's claim, not something

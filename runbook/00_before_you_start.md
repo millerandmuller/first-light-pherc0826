@@ -85,7 +85,7 @@ it — this table is just so you're not surprised. Set these as shell exports
 | `VILLA_DIR` | most steps | Defaults to `villa` (relative to wherever you run `make` from) — only set it if you cloned villa somewhere else |
 | `CHECKPOINT` | `infer`, `controls` | Defaults to `checkpoints/ink_9um/hybrid_3d2d-seed42/step-075000.pth` in the Makefile; `06_ink_inference.sh` downloads it automatically if missing |
 | `VOLUME_ZARR` | `render` (`05_render_tifxyz.sh`) | **Not passed by the Makefile — you must export this yourself before `make render`.** The scroll's actual OME-Zarr path on the open bucket, e.g. `s3://vesuvius-challenge-open-data/PHerc0826/volumes/20250821151701-9.362um-1.2m-113keV-masked.zarr/` — confirm the exact resolved key for whichever scroll you're running against the live S3 listing before setting this, the way `01_scroll_selection.md` did for the candidates it checked (marketing-page IDs and real bucket keys differ — see that file's "volume-ID trap" note) |
-| `CONTROL_SEGMENT`, `CONTROL_VOLUME_ZARR` | `controls` (`07_controls.sh`) | **Also not passed by the Makefile.** Which segment to use as the positive control is still an open domain decision (GAP in `expert_dossier.md`) — resolve this before running F6, not after |
+| `CONTROL_SEGMENT`, `CONTROL_VOLUME_ZARR` | `controls` (`07_controls.sh`) | **Also not passed by the Makefile.** Recommended: **PHerc0139, segment `w035`** — see Section 6 below for the full rationale and the two things about this pick that are NOT independently confirmed |
 
 ## 3. Discord registration (both team members, day 1)
 
@@ -173,7 +173,48 @@ watched `fit_spiral.py` actually find and accept this file. If it doesn't
 pick it up, check `fit_spiral.py`'s own `--help` or source for the exact
 expected filename before assuming the umbilicus itself is bad.
 
-## 5. Order to run the make targets
+## 5. Positive control segment (F6)
+
+Recommended: **PHerc0139, segment `w035`**, natively 9.362um — no pooling
+step needed to match the `ink_9um` checkpoint (dossier D-24), and the exact
+segment `tutorial5` uses as its own worked example for that checkpoint.
+
+Considered and rejected the three detached fragments in the `ink-labels`
+dataset (`scrollprize/datasets`, `ink` branch) — none is a native
+resolution match: `PHerc0009B` (4.320um), `PHerc0500P2` (2.215um/4.317um),
+`PHerc0343P` (2.215um/4.320um). All would need an unverified pooling step,
+which seemed like a worse trade-off for a first control run than accepting
+scroll-type ground truth (dossier D-38).
+
+**Two things NOT independently confirmed, resolve before trusting this as
+the actual control:**
+1. HF's `scrollprize/datasets` repo requires authentication this session
+   didn't have — whether `w035` specifically carries ink ground-truth
+   labels in the `ink-labels` dataset (as opposed to some other PHerc0139
+   segment) was not verified. Someone with HF access should check this
+   before F6 runs for real.
+2. `PHerc0139` is a scroll segment, not a detached fragment. Per the
+   `ink-labels` README, scroll ground truth is hand-annotated ink strokes;
+   fragment ground truth is aligned to an actual infrared photo of the
+   exposed writing, a stronger form of evidence. This pick trades that
+   rigor for resolution-native match and a documented working precedent.
+
+If you'd rather have fragment-grade ground truth and are willing to add a
+pooling step, `PHerc0009B` is the closest resolution among the three
+checked (4.320um → ~9um is roughly 2x downsampling, similar in kind to the
+2.4um→9.6um pooling case D-24 already documents as workable, though not
+verified for this specific fragment).
+
+`CONTROL_VOLUME_ZARR` for PHerc0139 (from `tutorial5`'s own example):
+`s3://vesuvius-challenge-open-data/PHerc0139/volumes/20250728140407-9.362um-1.2m-113keV-masked.zarr/`
+
+**Where to actually download the `w035.tifxyz` segmentation itself was not
+found** — `tutorial5` uses it as a pre-existing local path
+(`ink-dataset/pherc0139/w035/w035.tifxyz`) without saying where it comes
+from, and a guessed `dl.ash2txt.org` path for it 404'd. Check the Data
+Browser or ask in Discord for the actual source before this step.
+
+## 6. Order to run the make targets
 
 Run these from the repo root, in order. Each one is a real command against
 real data/hardware for the first time — go slowly, read the output, and
@@ -184,13 +225,14 @@ fill in the blanks as you go rather than after the fact.
 | 1 | `make setup` | Clones villa, sets up spiral-fitting + vesuvius Python envs via `uv` | ___ | ___ |
 | 2 | `make fetch-dataset SCROLL=PHerc0826` | Downloads the ~6.4 GiB spiral tracks dataset via rclone | ___ | ___ |
 | — | *(manual: Section 4 above)* | Fetch + verify + place the umbilicus | ___ | ___ |
+| — | *(manual: `02c_f3_preflight.md`)* | Write `spiral-scroll.json`, determine `spiral_outward_sense` in VC3D, download `normal_x`/`normal_y` overrides | ___ | n/a |
 | 3 | `export VOLUME_ZARR=...` | Set before step 5 — see Section 2 table | n/a | n/a |
 | 4 | `make spiral-fit SCROLL=PHerc0826 Z_BEGIN=___ Z_END=___` | Fits the spiral mesh to the chosen Z-window | ___ | ___ |
 | 5 | *(manual)* write `segment_flatten_input.json` | Points at the spiral-fit mesh from step 4 — schema not documented upstream, see `04_lasagna_flatten.sh`'s own comment | ___ | n/a |
 | 6 | `make flatten SCROLL=PHerc0826` | Flattens the fitted mesh via lasagna | ___ | ___ |
 | 7 | `make render SCROLL=PHerc0826` | Renders the flattened surface to a layered zarr (includes the D-19 sanity check) | ___ | ___ |
 | 8 | `make infer SCROLL=PHerc0826` | Downloads the ink_9um checkpoint if needed, runs both-direction ink inference | ___ | ___ |
-| 9 | *(resolve control segment — GAP, see Section 2)* then `export CONTROL_SEGMENT=... CONTROL_VOLUME_ZARR=...` | | ___ | n/a |
+| 9 | Download the `w035` segmentation for PHerc0139, then `export CONTROL_SEGMENT=/path/to/downloaded/w035.tifxyz CONTROL_VOLUME_ZARR=s3://vesuvius-challenge-open-data/PHerc0139/volumes/20250728140407-9.362um-1.2m-113keV-masked.zarr/` | `CONTROL_SEGMENT` must be a local filesystem path to the actual `.tifxyz` segmentation (`07_controls.sh` passes it straight to `vc_render_tifxyz --segmentation`), not just a name — see Section 5 for where to get it and the two unconfirmed caveats on this pick | n/a | n/a |
 | 10 | `make controls SCROLL=PHerc0826` | Runs the positive control through the identical pipeline | ___ | ___ |
 | | **Total** | | **___** | **___ / $150 cap** |
 

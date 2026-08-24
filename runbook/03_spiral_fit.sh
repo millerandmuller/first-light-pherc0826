@@ -8,6 +8,14 @@
 # dir; if ours is community-annotated or hand-produced, confirm its path matches
 # what fit_spiral.py expects before running this for real.
 #
+# READ runbook/02c_f3_preflight.md BEFORE running this for real — it documents
+# what villa main's fit_session.py actually requires beyond what the tutorial
+# above describes: a mandatory spiral-scroll.json (schema_version, name,
+# voxel_size_um, spiral_outward_sense — the last one is a human VC3D decision,
+# not something this script can determine), and normal_x/normal_y overrides
+# pointing at the S3 lasagna folder. Verified live against villa's actual
+# source (fit_session.py, config.py), not the tutorial.
+#
 # Fix (examiner_report.md P1, verified live 2026-08-23 against
 # https://dl.ash2txt.org/datasets/spiral_datasets/PHerc0826/ — the real
 # remote layout nests one timestamped folder under each scroll, e.g.
@@ -50,7 +58,8 @@ FIT_SPIRAL_CONFIG_OVERRIDES=$(cat <<JSON
   "loss_weight_shell_outer": 0,
   "loss_weight_shell_patch_radius": 0,
   "dense_spacing_mode": "grad_mag",
-  "loss_weight_dense_spacing": 0
+  "loss_weight_dense_spacing": 0,
+  "input_use_outer_shell": false
 }
 JSON
 )
