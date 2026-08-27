@@ -45,8 +45,23 @@ drift within hours.
 
 > **Trap before your first fit** (`spiral-fitting/config.py:265-266`): the fit
 > window defaults to `z_begin = 4000`, `z_end = 17000` — the whole written
-> region, which needs ~60 GB of GPU memory. You MUST set `Z_BEGIN`/`Z_END`
-> explicitly or the run will OOM on any rentable consumer card.
+> region. The ~60 GB figure sometimes quoted for this comes from villa's
+> *default* input config (full patches, `dense_spacing_mode: phase`, nonzero
+> shell-loss weights) — **not measured for that config, and not what this
+> pipeline actually runs.** Round-terminal correction (2026-08-27, real box):
+> under this pipeline's actual config (patches disabled, `dense_spacing_mode:
+> grad_mag`, zeroed shell/spacing weights — see `03_spiral_fit.sh`), the full
+> default window did **not** GPU-OOM. GPU memory stayed under 8 GiB of a
+> 32 GiB card throughout, and the run reached real optimization (313/30,000
+> iterations, accelerating past 0.9 it/s) before dying silently — no Python
+> traceback, ETA at death was ~9h for 30,000 steps at the crawl rate before
+> it accelerated. No `dmesg`/kernel-log access exists inside a RunPod pod to
+> confirm the cause; a host-RAM kill from preparing 8,384,681 tracks for the
+> full window is the leading suspect, not confirmed. **You should still set
+> `Z_BEGIN`/`Z_END` explicitly** — the tutorial's own recommended ~1,000-slice
+> first window is faster to inspect and iterate on regardless of whether the
+> full window actually OOMs on your specific config — but do not repeat the
+> unqualified "~60 GB, will OOM" claim as measured fact for this pipeline.
 
 1. **Create the network volume first, before deploying a pod** — RunPod
    requires this: a network volume can only be attached at pod-deployment
