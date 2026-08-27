@@ -68,11 +68,18 @@ criteria retroactively.
 resolution match; two open caveats)
 Recommended: **PHerc0139/w035** — natively 9.362 µm (no pooling needed),
 the exact segment `tutorial5` itself uses as its worked ink_9um example.
-**Open, not resolved this session:**
-1. Whether `w035` specifically carries ink ground-truth labels in
-   HuggingFace's `scrollprize/ink-labels` dataset was not independently
-   verified (that dataset needs HF auth this session didn't have) — confirm
-   before treating it as the control's ground truth.
+**RESOLVED 2026-08-27 (advisor, observed directly in Lutfiya's
+authenticated HF session):** the dataset lives under HF *buckets* (the
+`/datasets/...` URL form 404s). `w035_2026031718` carries full ink ground
+truth — `w035_2026031718_inklabels.zarr`/`.tif` (618 kB), supervision mask,
+surface volume, x/y/z tifxyz — at:
+https://huggingface.co/buckets/scrollprize/datasets/tree/ink/0139/w035_2026031718
+Additional caveat for the prereg (tutorial5, verbatim: "a PHerc. 0139
+segment from the models' own training set"): w035 is in the ink_9um
+training set, so the control validates the PIPELINE end-to-end, not model
+generalization — the prereg must label it exactly that way.
+
+**Still open:**
 2. It's a scroll segment, not a detached fragment — `ink-labels`' scroll
    ground truth is hand-annotated ink strokes, less rigorous than the
    infrared-photo-aligned fragment labels. None of the dataset's three
