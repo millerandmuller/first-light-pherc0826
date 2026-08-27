@@ -66,13 +66,21 @@ drift within hours.
      what's actually available in that same data center.
    - Make sure **Secure Cloud** is selected (not Community Cloud — Community
      Cloud pods cannot use network volumes at all).
-   - Pick an **RTX A6000 (48GB)** card from the filtered list.
+   - **Stale (round terminal, 2026-08-27): the A6000 line above is superseded**
+     by the "Why not the A6000 48GB" note earlier in this section — it was
+     unpurchasable by the time of deploy. Actually used: **RTX PRO 4500
+     32GB** (first-boot check passed: driver CUDA 13.0, torch 2.11.0+cu128
+     and 2.12.1+cu130 matmul both OK, real Triton kernel compiled+ran on
+     sm_120 — see `DECISION_LOG.md` 2026-08-27). Pick whatever EU-RO-1 card
+     is actually deployable at the time per that note; the PRO 4500 is not a
+     hard requirement, just what was available and worked.
    - Template/container image: pick a template with CUDA + Python already
      set up (search for something like "PyTorch" in the template picker) —
      `02_env_setup.sh` and `runbook/02_provision_manual.md` handle the rest
-     of the Python/uv setup on top of whatever base image you choose. There's
-     no specific template pinned yet; note which one you actually used once
-     you pick it, so the second run (F8 reproduction) uses the same one.
+     of the Python/uv setup on top of whatever base image you choose.
+     **Stale: "no specific template pinned yet" is superseded** — actually
+     used: RunPod's "PyTorch 2.8.0 (cu128)" template, image
+     `runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404`.
    - Under the SSH/access options, enable SSH terminal access and paste your
      public key.
    - Review the pricing summary (GPU $/hr + volume $/mo), then deploy.
@@ -118,7 +126,7 @@ transferred size, not 1:1.
 
 | Item | Rate | Time/amount used | Cost |
 |---|---|---|---|
-| GPU (A6000 48GB) | $___/hr | ___ hr | $___ |
+| GPU (RTX PRO 4500 32GB, actual — A6000 was unpurchasable, see note above) | $0.72/hr | ___ hr | $___ |
 | Network volume (200GB) | $___/mo | ___ days | $___ |
 | **Total so far** | | | **$___ / $150 cap** |
 
