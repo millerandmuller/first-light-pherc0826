@@ -91,6 +91,29 @@ drift within hours.
    defeating the whole point of renting a volume that persists across
    stop/start cycles.
 
+**Disk usage on `/workspace` inflates for many-small-file data — budget for
+it (round terminal, 2026-08-27, real box).** `/workspace` here is a MooseFS
+network filesystem (`mfs#euro-3.runpod.net:9421`). Measured directly:
+transferred/apparent bytes vs. actual disk consumed (`du -sh` vs.
+`du -sh --apparent-size`), same data, same box:
+
+| Data | Transferred (apparent) | Actual disk used | Ratio |
+|---|---|---|---|
+| `spiral_datasets/PHerc0826/.../tracks/` (12 large files) | 12 GiB | 12 GiB | 1.0x |
+| `villa/` (source + venvs + hundreds of thousands of small git/package files) | 17 GiB | 26 GiB | ~1.5x |
+| Whole `vesuvius-first-light/` tree (incl. the `normal_x`/`normal_y` zarrs, ~360k chunk files) | 18 GiB | 31 GiB | ~1.7x |
+
+**The pattern: large few-file datasets show no inflation; many-small-file
+datasets (chunked zarrs, git repos, installed Python packages) do.** Root
+cause not confirmed (candidates: per-file block-size overhead, or MooseFS
+replication goal >1x — `mfsgetgoal` isn't available from inside this pod to
+check directly). **`df -h /workspace` cannot tell you your remaining
+quota** — it reports the shared MooseFS cluster's total capacity (in this
+case 2.0 PB), not your paid 200GB volume's usage against its own limit.
+Budget accordingly: a later zarr-heavy fetch (another scroll's normal maps,
+`surf_sdt`, etc.) should be planned at roughly 1.5-1.7x its nominal
+transferred size, not 1:1.
+
 **Cost log (fill in as you go):**
 
 | Item | Rate | Time/amount used | Cost |

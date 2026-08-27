@@ -74,6 +74,61 @@ counterclockwise from the CT data alone — this has to be read off the scan
 in VC3D by a person looking at it. Do this before running `make spiral-fit`,
 not after; replace the placeholder above with `"CW"` or `"ACW"`.
 
+### Alternative to VC3D: slice-render read (round terminal, 2026-08-27)
+
+VC3D needs a GUI and (per the Docker finding above) doesn't build/run
+directly on this pod. `runbook/render_cw_acw_slices.py` is a legitimate
+alternative: it reads the volume zarr straight from the open-data S3 bucket
+(anonymous, via `s3fs`+`zarr`, no local copy of the ~17-135 GB full volume),
+at pyramid level 2 (4x downsample per the zarr's own OME multiscales
+metadata), and renders three labeled axial-slice PNGs at full-res z ≈
+5000/9000/13000 (inside the umbilicus's verified 1941-16262 range). Each PNG
+marks the umbilicus point (linearly interpolated between the two nearest
+`umbilicus.json` control points bracketing that z — our own interpolation
+choice, not a villa-documented method, but a standard one) and prints the
+assumed viewing convention directly in the image margin, so the convention
+travels with the picture rather than living in a separate note someone could
+lose track of.
+
+Run it (from `villa/spiral-fitting`, whose uv venv already has
+`zarr`/`s3fs`/`matplotlib`):
+
+```bash
+cd villa/spiral-fitting
+uv run python /workspace/vesuvius-first-light/runbook/render_cw_acw_slices.py
+```
+
+Output: `/workspace/vesuvius-first-light/renders_tmp/PHerc0826_z{5000,9000,13000}_level2.png`
+(~0.5-0.7 MB each). Pull them to a local machine over the same direct-TCP
+port used for SSH (works for `scp`, no extra port-forwarding needed):
+
+```bash
+scp -P 27614 -i ~/.ssh/id_ed25519 "root@<POD_IP>:/workspace/vesuvius-first-light/renders_tmp/*.png" ~/Desktop/
+```
+
+or view them in the pod's own Jupyter Lab (already running, port 8888) —
+construct the URL as `https://<POD_ID>-8888.proxy.runpod.net/lab?token=<token from the Jupyter process args>`;
+**this exact proxy URL was not independently confirmed to resolve this
+session** (only that Jupyter is listening locally on the pod) — verify it
+loads before relying on it, `scp` is the confirmed-working path.
+
+**Convention honesty (villa's own frame is undocumented, dossier D-33):** no
+source states which way `fit_spiral.py` itself expects `"CW"`/`"ACW"` to be
+measured from. The renders assume "viewed looking along +z; +x right, +y
+down (native array orientation, row=y, col=x, no flip applied)" — a stated,
+self-consistent choice, not a confirmed one. **Treat the answer read off
+these images as a first guess, not ground truth**, and validate it
+empirically rather than trusting it blind: after the first windowed fit
+completes (Section "First fit attempt" below), overlay the fit's own output
+spiral track on the same axial-slice render (reusing this script's slice-
+loading code) and check by eye whether the tracked path actually follows the
+visible papyrus wraps or cuts across them. If it cuts across them, flip
+`spiral_outward_sense` and re-run — cheap (minutes, not hours) since the
+z-window is small. **The exact field/array to pull the fit's spiral-track
+points from is not yet known** — `fit_spiral.py`'s output structure hasn't
+been inspected against a completed run yet; note the actual field name here
+once the first fit produces output, rather than guessing it now.
+
 **Path override values are relative to the dataset root** if not absolute
 (confirmed in `fit_session.py`'s `_normalise_path()` — a relative override
 gets joined to the dataset root; an absolute path is also accepted as-is).
