@@ -42,7 +42,9 @@ top-level key is `paths`, not `path_overrides` — confirmed directly from
   "schema_version": 1,
   "name": "PHerc0826",
   "voxel_size_um": 9.362,
-  "spiral_outward_sense": "TODO_DETERMINE_IN_VC3D",
+  "spiral_outward_sense": "CW",
+  "normal_zarr_group": "2",
+  "lasagna_scale": 4,
   "paths": {
     "tracks_dbm": "tracks/PHerc0826_20250821151701_surface_m7_L0_th0.2.dbm",
     "normal_x": "lasagna/PHerc0826_nx.ome.zarr",
@@ -51,6 +53,14 @@ top-level key is `paths`, not `path_overrides` — confirmed directly from
   }
 }
 ```
+
+`spiral_outward_sense: "CW"` above is a **sourced first guess** (the
+maintainers' own workflow-post example), not a scroll-specific measurement —
+see "The picture read failed too" below for why, and for the empirical
+validation procedure that actually determines it. `normal_zarr_group` and
+`lasagna_scale` are explicit overrides of config defaults that would
+otherwise silently read the wrong pyramid level — see "Correctness check"
+below.
 
 **Fix (round terminal, 2026-08-27, real box):** the `tracks_dbm` value above was
 missing its `tracks/` prefix in an earlier draft of this template. Confirmed
@@ -128,6 +138,152 @@ z-window is small. **The exact field/array to pull the fit's spiral-track
 points from is not yet known** — `fit_spiral.py`'s output structure hasn't
 been inspected against a completed run yet; note the actual field name here
 once the first fit produces output, rather than guessing it now.
+
+### The picture read failed too — and why per-track computation doesn't recover the sense either
+
+**The slice-render read above turned out not to be readable.** A
+three-model cross-check on the rendered images split (CW / ACW / ambiguous),
+and a zoomed-crop re-read concluded the call is genuinely unresolvable at
+this resolution: heavy deformation makes both winding senses locally look
+alike, and the umbilicus marker glyph itself occluded the one decisive
+feature (the innermost sheet termination). **Runbook note for future
+renders: use a small open circle + offset crosshair, never a solid cross
+over the center** — it hides exactly the pixels that matter most.
+
+**Tried computing it from the track data instead, and that failed too —
+worth recording precisely, since it's a real methodological finding, not
+just a null result.** Method: `villa/spiral-fitting/tracks.py`'s own
+`load_tracks_from_dbm` (verified live: track arrays are stored **zyx**, not
+xyz — the function's own docstring and its `z_column = entry[:, 0]` line
+confirm this) loaded every track lying entirely within 200-slice bands at
+z=5000/9000/13000 (194267 / 159173 / 73201 tracks respectively). Per track:
+`dx/dy` from the interpolated umbilicus (same interpolation as the render
+script), `r = hypot(dx, dy)`, `theta = unwrap(atan2(dy, dx))`, least-squares
+slope `dr/dtheta`. **Result: ~50/50 split in every band** (48.6/51.4%,
+51.6/48.4%, 47.8/52.2%), majority sign flipping between bands, no band
+above 80% agreement. Ruled out a sample-size/noise explanation directly
+before accepting this as a real negative: filtering to only the longest,
+most angularly-swept tracks (top ~1% by angular sweep, up to 17°) did not
+improve agreement — stayed at 50-52% across every threshold tested from 0
+to 0.3 rad. Two unconfirmed candidate causes: (1) these are short,
+disconnected local track fragments (median sweep <1°, 99th percentile only
+~39° — a small fraction of a full 2π turn), where real physical coil
+waviness in a damaged/creased papyrus layer likely dominates the tiny true
+secular per-turn radius growth at that short a baseline; (2) a track's own
+point order may not be consistently outward-oriented, making the slope's
+sign an artifact of extraction order rather than winding direction.
+Distinguishing them, or getting a real per-track signal, would need
+connecting tracks across their crossings into a longer coherent path —
+villa's own track-graph/crossing machinery (`grow_track_graph.py`,
+`PackedTracks`, crossing-partner CSR) does this internally, but that's real
+additional engineering, not attempted here.
+
+**Resolution: a sourced first guess, validated empirically by the fit
+itself.** The maintainers' own First Letters workflow post
+(scrollprize.substack.com/p/from-ct-scan-to-ancient-text-a-first) ships an
+example `spiral-scroll.json` with `"spiral_outward_sense": "CW"`, and states
+its own method for determining this is "manually inspecting some slices in
+VC3D" — i.e. the exact method that just failed a human, three AI models, and
+a 180k-point regression. That contrast is itself worth keeping in mind for
+PR #1's documentation motivation. **Entered `"CW"` as a first guess, sourced
+to the workflow example, not scroll-specific evidence** — not a measurement,
+a starting point for the overlay-fit validation described above, which
+remains the actual determination procedure. If the overlay shows the fitted
+spiral cutting across the visible wraps, flip to `"ACW"` and re-run; the
+runbook records whichever run actually tracks the wraps as the empirical
+determination.
+
+### Correctness bugs found in `normal_zarr_group` / `lasagna_scale` — one static, one only by actually running the fit
+
+The same workflow post's example JSON also carries
+`"normal_zarr_group": "2"` and `"lasagna_scale": 2`, stated as suitable for
+the 8/9um prize volumes. Checked against `fit_session.py` directly (not
+assumed): both default to different values — `normal_zarr_group` defaults to
+`"4"`, `lasagna_scale` defaults to `4` (`fit_session.py:594-596`). **These
+control which OME-Zarr pyramid level the lasagna `normal_x`/`normal_y`
+stores are read at** (confirmed from the file's own version-27 changelog
+comment: making these dataset-root facts specifically prevents a client from
+"read[ing] the Lasagna stores at the wrong zarr level"). Checked our actual
+downloaded `PHerc0826_nx.ome.zarr`'s own `.zattrs`: group `"2"` = 4x
+downsample, group `"4"` (the default) = **16x downsample** — a real 4x
+resolution gap, not a trivial one. Without setting these keys explicitly,
+the fit would have silently loaded the normal maps at 16x downsample instead
+of the intended 4x, with no error raised. Added both keys to
+`spiral-scroll.json` (see the template above), cited to the workflow post
+rather than trusting either the post or the code defaults blind.
+
+**Second correctness bug, caught by actually running the fit, not by static
+review:** `lasagna_scale: 2` (the post's value) fails at runtime —
+`prepare_lasagna_volume` computes `z_lo = floor(z_begin/lasagna_scale)`,
+`z_hi = min(store_z_size, ceil(z_end/lasagna_scale))`
+(`lasagna_data.py:219-222`); with `z_begin=10000`, `lasagna_scale=2`, that's
+`z_lo=5000`, clamped against the store's actual z-size of 4230, giving
+`z_hi=4230 < z_lo` and a hard `RuntimeError: lasagna z-ROI [5000, 4230) is
+empty`. Root cause: `lasagna_scale` must equal the *actual* downsample
+factor of whichever `normal_zarr_group` you pick, and this dataset's group
+`"2"` is a 4x downsample (confirmed directly from `PHerc0826_nx.ome.zarr`'s
+own `.zattrs` multiscales metadata — group `"2"` -> scale `[4,4,4]`, group
+`"4"` -> scale `[16,16,16]`), not 2x. **The post's `"2"`/`2` pairing does not
+hold for this scroll's lasagna pyramid** — the template above now uses
+`lasagna_scale: 4` to match group `"2"`'s real scale, verified working: the
+fit ran end-to-end after this fix. Lesson for the PR: verify a value taken
+from someone else's worked example against your own dataset's actual
+structure before trusting it, even when it's the maintainers' own post.
+
+### First real windowed fit: ran end-to-end, real Triton kernels, no OOM — and a load-bearing negative result on CW/ACW
+
+With the fixes above, `make spiral-fit SCROLL=PHerc0826 Z_BEGIN=10000
+Z_END=11000` (equivalently, `03_spiral_fit.sh`'s `uv run python fit_spiral.py`
+invocation) **ran successfully to completion** — the actual, real thing this
+whole runbook has been building toward. 642,640 tracks loaded within the
+z-ROI, loss dropped smoothly (955.9 at step 1000 -> 747.7 at step 1400 with
+`optimizer_num_training_steps` overridden to 1500 for a fast first check;
+`output_save_png_visualizations: true` also set to get the built-in
+finalization renders), `satisfied_tracks = 61631/642640 (9.6%)`,
+`satisfied_track_points = 13039268/33967984 (38.4%)`. This is villa's actual
+production optimizer running its real Triton kernels (`gap_triton.py`/
+`flow_triton.py` are imported by the flow-field model this run constructs)
+on sm_120 for the first time this project — **Blackwell all-clear for the
+real fit path**, not just the generic JIT-kernel smoke test from box setup.
+
+**Separately, deliberately ran the D-41 default-window case** (no
+`Z_BEGIN`/`Z_END` override, villa's own `z_begin=4000`/`z_end=17000`
+default) to capture the predicted OOM. It did **not** OOM — GPU memory
+stayed under 8 GiB of the card's 32 GiB throughout, Triton kernels compiled,
+and it reached real optimization (313/30,000 iterations, accelerating past
+0.9 it/s) before dying silently with no traceback after ~5.5 minutes. No
+`dmesg`/kernel-log access exists inside this pod to confirm a cause; the
+silent-death signature (a `resource_tracker` cleanup warning immediately
+before the log stops, no Python exception) is consistent with an external
+kill (system RAM OOM from preparing 8,384,681 tracks for the full window, or
+the `timeout` wrapper, though the wrapper's cap was 900s and the process
+died around ~330s of its own elapsed time) but this is **not confirmed**.
+**Revises D-41, doesn't confirm it as originally stated**: the predicted
+GPU-VRAM OOM did not reproduce for this pipeline's actual (patches-disabled,
+`grad_mag`-mode) config; whatever killed the process is a different,
+unconfirmed failure mode.
+
+**CW/ACW: still unresolved, and now by a second independent method.** Ran
+the identical 1500-step fit with `spiral_outward_sense: "ACW"` (all other
+config unchanged) for a direct comparison: `loss` at step 1400 = 736.2 vs.
+747.7 for CW (under 2% apart), `satisfied_tracks = 61399/642640 (9.6%)` vs.
+61631/642640 (9.6%) for CW — **statistically indistinguishable**. The fit's
+own loss and satisfaction metrics do not distinguish CW from ACW at all;
+the optimizer converges equally well labeled either way. This means the
+per-track `dr/dtheta` computation, the picture read, *and* a loss-based
+comparison have now all failed to resolve this — only a genuine geometric
+comparison of the two fits' actual output shapes could, and the built-in
+`render_spiral_on_tracks_for_slice` visualization wasn't usable for this:
+with patches disabled (`fitting 0 patches`), the `snapped_tracks` argument
+this call site passes is always empty, so every track renders with an
+arbitrary hash-based colour instead of being colour-coded by fit
+quality/winding — the resulting image (saved, see
+`spiral_on_tracks_s10525_fitted.png`) shows real track density but isn't
+legible for a CW/ACW call. **Not pursued further this round**: reconstructing
+the model's actual predicted geometry from the raw checkpoint tensors
+(`spiral_and_transform`'s `flow_field.flows.*` etc.) to compare the two fits'
+literal output shapes directly would resolve this properly, but is
+real additional engineering — checked in before attempting it.
 
 **Path override values are relative to the dataset root** if not absolute
 (confirmed in `fit_session.py`'s `_normalise_path()` — a relative override
