@@ -250,8 +250,8 @@ fill in the blanks as you go rather than after the fact.
 
 | # | Command | What it does | Wall-clock | Cost |
 |---|---|---|---|---|
-| 1 | `make setup` | Clones villa, sets up spiral-fitting + vesuvius Python envs via `uv` | ___ | ___ |
-| 2 | `make fetch-dataset SCROLL=PHerc0826` | Downloads the ~6.4 GiB spiral tracks dataset via rclone | ___ | ___ |
+| 1 | `make setup` | Clones villa, sets up spiral-fitting + vesuvius Python envs via `uv` (see the apt-get block `02_env_setup.sh` runs first — needs 10 system libraries for `volume-cartographer`'s CMake build: `libceres-dev libopencv-dev nlohmann-json3-dev libcurl4-openssl-dev libtiff-dev zlib1g-dev libzstd-dev liblz4-dev libcgal-dev libblosc-dev`; verified live 2026-08-27, none of these ship on the RunPod PyTorch template) | ___ | ___ |
+| 2 | `make fetch-dataset SCROLL=PHerc0826` | Downloads the spiral tracks dataset via rclone — **actual size for PHerc0826, measured 2026-08-27: 11.555 GiB / 12 files**, not the ~6.4 GiB estimated in F1 (see `01_scroll_selection.md`'s corrected D-29 note) | ___ | ___ |
 | — | *(manual: Section 4 above)* | Fetch + verify + place the umbilicus | ___ | ___ |
 | — | *(manual: `02c_f3_preflight.md`)* | Write `spiral-scroll.json`, determine `spiral_outward_sense` in VC3D, download `normal_x`/`normal_y` overrides | ___ | n/a |
 | 3 | `export VOLUME_ZARR=...` | Set before step 5 — see Section 2 table | n/a | n/a |

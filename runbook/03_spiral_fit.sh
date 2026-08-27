@@ -25,6 +25,14 @@
 # the scroll root. Discovered dynamically below rather than hardcoded, since
 # every one of the 9 candidates in runbook/01_scroll_selection.md has exactly
 # one such subfolder, and the exact timestamp differs per scroll.
+#
+# Fix (round terminal, 2026-08-27, real box): this script was invoking bare
+# `python`, which on the RunPod PyTorch template resolves to the box's global
+# env (/usr/local/bin/python), not the uv-managed venv `02_env_setup.sh`
+# builds in villa/spiral-fitting. Reproduced live: `ModuleNotFoundError: No
+# module named 'zarr'` before spiral-scroll.json was even read. Same bug
+# class as the D-19 fix already applied in 05_render_tifxyz.sh. Switched to
+# `uv run python`, which uses the project's own pyproject/lockfile venv.
 set -euo pipefail
 
 : "${SCROLL:?SCROLL required}"
@@ -66,7 +74,7 @@ JSON
 export FIT_SPIRAL_OUT_DIR="$OUT_DIR"
 
 pushd "$VILLA_DIR/spiral-fitting" >/dev/null
-python fit_spiral.py --dataset "$DATASET_DIR"
+uv run python fit_spiral.py --dataset "$DATASET_DIR"
 popd >/dev/null
 
 echo "spiral fit output: $OUT_DIR"

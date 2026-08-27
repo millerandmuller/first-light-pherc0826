@@ -124,7 +124,7 @@ use the resolved key in any script, never the displayed one.
 | PHerc0358 | 20250719150703-... | 20250821151737-9.362um-1.2m-113keV-masked.zarr | 9.362um | No | Community hand-annotated, both repos (+ TAUIL preregistered v2 correction candidate) | 5.6 + 1.4 = 7.0 GiB | candidate — backup |
 | PHerc0800 | 20250510225703-... | not resolved (excluded before checking) | 8.640um | **Yes — 6 `auto_grown_*` segments** (2025-10-28/29) | n/a | not checked | **excluded** — existing public surface work fails H4's "no public ink results" requirement |
 | PHerc0813 | 20250720160015-... | 20250821151723-9.362um-1.2m-113keV-masked.zarr | 9.362um | No | Community hand-annotated (both repos) | 7.6 + 2.0 = 9.6 GiB | candidate |
-| PHerc0826 | 20250720174915-... | 20250821151701-9.362um-1.2m-113keV-masked.zarr | 9.362um | No | Published — "sean (bruniss)" ref per repo's own metadata, ddf2ffa2..., **49 pts**, z 1941-16262, via Discord #general 2026-08-08 (herculaneum-umbilici repo) | 5.0 + 1.4 = 6.4 GiB | **smallest of the sean-covered scrolls — top pick** |
+| PHerc0826 | 20250720174915-... | 20250821151701-9.362um-1.2m-113keV-masked.zarr | 9.362um | No | Published — "sean (bruniss)" ref per repo's own metadata, ddf2ffa2..., **49 pts**, z 1941-16262, via Discord #general 2026-08-08 (herculaneum-umbilici repo) | ~~5.0 + 1.4 = 6.4 GiB~~ **measured 2026-08-27: 11.555 GiB, 12 files** — the estimate below missed the `.dbm`'s hidden `.dbm.vctracks/` companion subdirectory (9 more files, incl. a 5.19 GiB `coordinates.i32`); see corrected D-29 | **smallest of the sean-covered scrolls — top pick** (on umbilicus + no-public-ink grounds; the tracks-size figure was wrong, see below) |
 
 New dossier-style entries (continue `expert_dossier.md` numbering from D-26;
 not yet copied into that file — do that alongside a full re-verification pass
@@ -142,16 +142,22 @@ by reading the allowlist myself rather than taking that at face value).
 | D-26 | FACT | Of the nine eligible scrolls with published spiral tracks, only PHerc0800 has a `segments/` prefix in the open-data S3 bucket (6 `auto_grown_*` folders, dated 2025-10-28/29); the other eight have only `photos/`, `representations/`, `volumes/`. | https://vesuvius-challenge-open-data.s3.amazonaws.com/?list-type=2&delimiter=/&prefix=PHerc0800/ (and the same query per scroll) · T2 · 2026-08-23 | "PHerc0800/segments/20251028213516-auto_grown_20251028213516907/" | PENDING |
 | D-27 | FACT | None of the nine eligible scrolls' `spiral_datasets/<scroll>/<timestamp>/` folders contain an `umbilicus.json`; all contain only `tracks/` (a `.dbm` file, `.crossings.npz`, and a small `.extract.json`). | https://dl.ash2txt.org/datasets/spiral_datasets/ (checked per-scroll) · T2 · 2026-08-23 | "tracks/" (only entry shown at each folder level) | PENDING |
 | D-28 | FACT | `github.com/JamesDarby345/Umbilicus_Maker` is a community umbilicus-annotation project, but its published files (`umbilicus_points/s1A...s4_*.json`) cover only Scroll 1-4, current "as of october 2024" per its own README — it does not cover any of the nine 2025-batch eligible scrolls. | https://github.com/JamesDarby345/Umbilicus_Maker · T2 · 2026-08-23 | "This repo provides .json files that specify umbilicus points for each of the major released scroll scans as of october 2024" | PENDING |
-| D-29 | JUDGMENT | Spiral-tracks dataset sizes (`.dbm` + `.crossings.npz`) across the eight non-excluded candidates range from about 6.4 GiB (PHerc0826) to about 14.7 GiB (PHerc0268), read off each scroll's directory listing; not a verbatim single quote, downgraded from FACT since no one sentence states this comparison. | https://dl.ash2txt.org/datasets/spiral_datasets/ (per-scroll tracks/ listings) · T2 · 2026-08-23 | n/a (JUDGMENT, no single verbatim quote applies) | n/a |
+| D-29 | JUDGMENT | **Corrected 2026-08-27 (round terminal, real box):** the original estimate below was wrong. Spiral-tracks dataset sizes read off each scroll's directory listing as `.dbm` + `.crossings.npz` only, giving about 6.4 GiB (PHerc0826) to about 14.7 GiB (PHerc0268) — this missed each `.dbm` file's hidden `.dbm.vctracks/` companion subdirectory (9 additional files per scroll, including a large `coordinates.i32`), which a shallow directory listing does not expand. Measured directly for PHerc0826 after `make fetch-dataset`: **11.555 GiB actual, 12 files** (rclone's own transfer summary), not 6.4 GiB. The other seven candidates' figures in the table above are not re-measured — treat all of them as similarly undercounted until fetched. | https://dl.ash2txt.org/datasets/spiral_datasets/ (per-scroll tracks/ listings, shallow) · T2 · 2026-08-23; corrected against `first-light-pherc0826` pod, rclone transfer log, 2026-08-27 | n/a (JUDGMENT, no single verbatim quote applies) | n/a |
 | D-30 | FACT | `github.com/AlexeyDrobkovStrikesBack/herculaneum-umbilici` provides manual umbilicus polylines for ten of the thirteen prize scrolls, and states the other three (PHerc 0125, 0211, 0826) already had umbilici published by "sean" via Discord. | https://github.com/AlexeyDrobkovStrikesBack/herculaneum-umbilici · T2 · 2026-08-23 | "Manual umbilicus (winding-axis) polylines for ten of the thirteen First Letters prize scrolls" | PENDING |
 | D-31 | FACT | `qc/sean_reference.json`'s own `what`/`source` metadata fields (not the README) attribute the three reference umbilici to "sean (bruniss)," posted in the Vesuvius Discord `#general` on 2026-08-08 as three file attachments — a third-party claim by the community repo, not bruniss self-identifying anywhere we've directly seen. For PHerc0826: sha256 `ddf2ffa2ab91270b4ccc443d22f10587090f1c5b5561d34dfc4c838ed7a451f3`, 4379 bytes, 49 points, z 1941-16262. | https://raw.githubusercontent.com/AlexeyDrobkovStrikesBack/herculaneum-umbilici/main/qc/sean_reference.json · T2 · 2026-08-23 | "posted by bruniss in the Vesuvius Challenge Discord, #general, 2026-08-08, as three file attachments" | PENDING |
 
 ## Pick
 
-**Top pick: PHerc0826 — unchanged.** Smallest tracks dataset (6.4 GiB) among
-the eight candidates with no existing public surface/ink work, standard
-9.362um voxel size (native fit for the `ink_9um` checkpoint per dossier D-24,
-no pooling step needed). It's also one of the three scrolls with an already
+**Top pick: PHerc0826 — unchanged, but the size tiebreaker was wrong.**
+**Correction (round terminal, 2026-08-27, real box):** this section originally
+called PHerc0826 the smallest tracks dataset at 6.4 GiB — that figure was
+wrong (see corrected D-29 above); the measured size is 11.555 GiB. The pick
+itself stands, but not on a size tiebreaker that no longer holds without
+re-measuring the other seven candidates (not done). **The pick's real
+grounds are the umbilicus (D-30/D-31: already published, sha256-verified)
+and no existing public surface/ink work** — both independent of tracks size.
+Also unchanged: standard 9.362um voxel size (native fit for the `ink_9um`
+checkpoint per dossier D-24, no pooling step needed). It's also one of the three scrolls with an already
 published umbilicus (D-31): 49-point reference attributed to "sean (bruniss)"
 by the community repo's own metadata, posted as a Discord attachment on
 2026-08-08. **This changes the F3 gate**, and makes it easier, not harder:

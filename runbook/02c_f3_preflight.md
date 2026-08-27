@@ -44,13 +44,24 @@ top-level key is `paths`, not `path_overrides` — confirmed directly from
   "voxel_size_um": 9.362,
   "spiral_outward_sense": "TODO_DETERMINE_IN_VC3D",
   "paths": {
-    "tracks_dbm": "PHerc0826_20250821151701_surface_m7_L0_th0.2.dbm",
+    "tracks_dbm": "tracks/PHerc0826_20250821151701_surface_m7_L0_th0.2.dbm",
     "normal_x": "lasagna/PHerc0826_nx.ome.zarr",
     "normal_y": "lasagna/PHerc0826_ny.ome.zarr",
     "gradient_magnitude": "lasagna/PHerc0826_grad_mag.ome.zarr"
   }
 }
 ```
+
+**Fix (round terminal, 2026-08-27, real box):** the `tracks_dbm` value above was
+missing its `tracks/` prefix in an earlier draft of this template. Confirmed
+from `fit_session.py`'s own conventional default,
+`conventional_relative="tracks/2um_ds2_ps256_surf_v2.dbm"` — an override
+*replaces* the full path relative to the dataset root, it does not get
+`tracks/` prepended automatically. The downloaded file lives at
+`<dataset_root>/tracks/PHerc0826_...dbm`, so the override must include that
+prefix or `fit_spiral.py` looks in the wrong place. Reproduced live: without
+the prefix this key resolves to a path that doesn't exist; with it, the fit
+correctly reaches the next validation step (spiral_outward_sense).
 
 Save this as `spiral-scroll.json` inside the dataset root
 (`spiral_datasets/PHerc0826/20250821151701/` — the same folder

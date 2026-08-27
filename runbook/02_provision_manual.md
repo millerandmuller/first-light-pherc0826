@@ -43,6 +43,33 @@ wheels — this is fine on the rented Linux box, but don't try to `uv sync` this
 locally on macOS to test.
 
 ## 4. VC3D
+
+**Correction (round terminal, 2026-08-27, real box):** the `docker pull`
+approach below does not work on the rented pod itself — confirmed live,
+`docker: command not found` on `first-light-pherc0826` (RunPod Secure Cloud,
+EU-RO-1). RunPod's Secure Cloud pods do not have Docker available inside
+them. This may still be the right path on a machine that does have Docker
+(e.g. running VC3D's GUI locally), but not for building/running
+volume-cartographer on the pod.
+
+What actually works on the pod: build `volume-cartographer` natively via
+`uv sync` (it's a transitive dependency of `vesuvius[models]`, and
+`spiral-fitting`'s own `uv pip install -e ../volume-cartographer` step also
+needs it) — but only after installing 10 system libraries its CMake build
+needs and this template doesn't ship:
+
+```bash
+apt-get update
+apt-get install -y \
+  libceres-dev libopencv-dev nlohmann-json3-dev libcurl4-openssl-dev \
+  libtiff-dev zlib1g-dev libzstd-dev liblz4-dev libcgal-dev libblosc-dev
+```
+
+Each was found one CMake error at a time (Ceres, then OpenCV, then
+nlohmann_json, then CURL/TIFF/ZLIB together, then Blosc) — install all ten up
+front on a fresh box rather than repeating that loop. `02_env_setup.sh` now
+does this automatically before its `uv sync` calls.
+
 ```bash
 docker pull ghcr.io/scrollprize/villa/volume-cartographer:stable
 ```
@@ -51,7 +78,9 @@ the manual mesh-inspection step in F3) — not covered by the source workflow
 post, which describes VC3D as a GUI app opened locally. Confirm whether a
 headless/remote-display setup is needed for a rented box, or whether mesh
 inspection can be done by syncing `.tifxyz` output back to a local machine
-with VC3D installed instead.
+with VC3D installed instead. **Given the Docker finding above, this is now
+only relevant for a machine with Docker available** — the pod itself needs
+the native-build path instead.
 
 ## 5. Ink checkpoint
 ```bash
