@@ -10,7 +10,7 @@ never edited retroactively.
 # Preregistration — PHerc0826, window1 (z 10000-11000, inner windings w010-w065)
 
 Committed: 2026-08-27 (before any target inference; see git log)
-Commit hash: filled in the follow-up commit immediately after this file's initial commit; both referenced in the README's Proof beat.
+Commit hash of the preregistration act: `2b9425e47bcc477ccc0986c06578c29b5730cc1a` (this line added in the immediate follow-up commit; the hash above is the binding one, referenced in the README's Proof beat).
 
 ## Scope
 
