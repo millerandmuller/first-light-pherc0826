@@ -52,16 +52,15 @@ verified live against `vesuvius.ink_detection.inference.infer --help` this
 session, no fix needed). Preregistered criteria should require the signal
 to reproduce in BOTH direction outputs, not just one, per this source.
 
-## D-06 — held-out validation (PENDING re-verification against live prize page)
+## D-06 — held-out validation (re-verified live 2026-08-27 by the advisor: wording current)
 > "Run your method on the public input renders/volumes with known ground
 > truth (using k-fold validation if you trained on them) and include the
 > results."
-Sourced 2026-08-23; not independently re-fetched live this session — verify
-current wording before quoting it in the committed prereg.
+Re-fetched live 2026-08-27 (advisor): quote matches the current page verbatim. Safe to quote.
 
-## D-07 — false-positive mitigation statement (PENDING re-verification)
-> "Tell us why you are confident that the results you are getting are real."
-Same PENDING caveat as D-06. The `criteria_template.md` already has a
+## D-07 — false-positive mitigation statement (re-verified live 2026-08-27; fuller current wording below)
+> "If there is any risk of your model producing spurious patterns — apparent letterforms that are not actually supported by the data — please let us know how you mitigated that risk. Tell us why you are confident that the results you are getting are real."
+(Re-fetched live 2026-08-27, advisor; this is the full current wording.) The `criteria_template.md` already has a
 section for this, to be filled in AFTER inference without editing the
 criteria retroactively.
 
