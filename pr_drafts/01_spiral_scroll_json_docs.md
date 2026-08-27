@@ -1,33 +1,35 @@
 <!--
 Mirrors villa/.github/pull_request_template.md verbatim (fetched 2026-08-23).
-Facts and diff below are filled in by the round terminal (technical content
-only, cite-or-GAP, all verified live against villa commit 6847063 on
-first-light-pherc0826). The prose fields marked TODO(human) are NOT filled
-in — motivation prose, "why useful", and the final PR description stay
-strictly human-written per CONTRIBUTING.md (D-15) and the project's own
-working agreement. This PR targets `villa/spiral-fitting/README.md`
-(documentation only, no code change) -- CONTRIBUTING's screenshot-gate for
-bugfix PRs (D-13) does not apply to a docs PR, but the schema-validation
-screenshot below is included anyway as it landed for free while testing.
+Prose below is Lutfiya's own (2026-08-27) — human-written per CONTRIBUTING.md
+(D-15) and the project's working agreement. Paths/numbers/proof filled in by
+the round terminal, all verified live against villa commit 6847063 on
+first-light-pherc0826.
 -->
 
-**In one sentence:** TODO(human)
+**In one sentence:** Writes down the schema of the `spiral-scroll.json` file
+that `fit_spiral.py` requires, including the `lasagna_scale` value that is
+easy to get wrong and fails in a confusing way.
 
-**One real example:** Running `fit_spiral.py --dataset` against real
-PHerc0826 data (villa commit `6847063`, 2026-08-26) without a
-`spiral-scroll.json` in the dataset root raised `ScrollSpecError` at
-`fit_session.py:705` — the tutorial (scrollprize.org/tutorial_spiral) never
-mentions this file is required.
+**One real example:** Setting up PHerc0826 from scratch, we had to
+reconstruct this file one key at a time from the errors each missing field
+produced. Then we copied a `normal_zarr_group` / `lasagna_scale` pairing
+from an example elsewhere, and the run died with
+`RuntimeError: lasagna z-ROI [...] is empty` — because on this scroll's
+store, group `"2"` is the 4x downsample, not the group the example used.
 
-**Before:** No documentation anywhere (tutorial or this repo's `README.md`)
-states that `spiral-scroll.json` is mandatory, what its required schema is,
-or that `normal_zarr_group`/`lasagna_scale` must be set explicitly for
-9um-class prize volumes.
+**Before:** The README refers to `spiral-scroll.json` (the service won't
+start without it; it's called the only source of the scroll's name, voxel
+size and Lasagna store layout) but never says what goes in it, and the
+spiral tutorial doesn't mention the file at all. `lasagna_scale` appears
+once, in a list of fields the service rejects if a client sends them.
 
-**After this PR:** A new `## Scroll specification (spiral-scroll.json)`
-section in `spiral-fitting/README.md` documents the required schema,
-verbatim error text, and the `normal_zarr_group`/`lasagna_scale` gotcha
-below.
+**After this PR:** A short section in `spiral-fitting/README.md` giving the
+required keys, the optional `paths` overrides, and a worked PHerc0826
+example. The `lasagna_scale` paragraph says what the value has to match —
+the actual downsample factor of the group you picked, read from that
+store's own `.zattrs` — and both ways a wrong value shows up: silently
+reading normal maps at the wrong resolution with no error at all, or the
+empty-z-ROI `RuntimeError` if the mismatch is big enough.
 
 **Proof:**
 
@@ -41,11 +43,18 @@ overrides).
 ```
 (`fit_session.py:705`, reproduced live 2026-08-27.)
 
-2. Schema-validation-passing, full run to convergence (real, captured
-   2026-08-27, `logs/real_windowed_fit_CW_30k.log`): once `spiral-scroll.json`
-   was written correctly, the fit got past every schema check and ran the
-   full 30,000-step optimization to completion — no remaining
-   `ScrollSpecError`, no OOM, no silent death:
+2. `normal_zarr_group`/`lasagna_scale` mismatch, reproduced live:
+```
+RuntimeError: lasagna z-ROI [5000, 4230) is empty (store z size 4230)
+```
+   with `lasagna_scale: 2` (the workflow post's own example value) against
+   PHerc0826's actual lasagna store — group `"2"` is a real 4x downsample
+   for this scroll (confirmed from `PHerc0826_nx.ome.zarr`'s own `.zattrs`
+   multiscales metadata, not assumed), not 2x.
+
+3. Same run completing after fixing `lasagna_scale: 4`, all the way to
+   convergence (real, captured 2026-08-27, `logs/real_windowed_fit_CW_30k.log`):
+   no remaining `ScrollSpecError`, no OOM, no silent death:
    ```
    PROGRESS Optimizing — 0/30,000 iterations (0.0%) — elapsed 0s
    ...
@@ -56,21 +65,15 @@ overrides).
    ```
    Loss fell 955.9 → stable ~330-340 (plateaued, not still descending —
    genuine convergence). Wall-clock 29m49s on one RTX PRO 4500 32GB.
-   Screenshot TODO(human) if a rendered image is wanted in addition to this
-   log excerpt.
+   (642,640 tracks loaded; the first end-to-end confirmation at 1,500 steps
+   was loss 955.9→747.7 — cited here as the earlier checkpoint of the same
+   fix, superseded by the full convergence run above.)
 
-3. `normal_zarr_group`/`lasagna_scale` bug, reproduced live:
-```
-RuntimeError: lasagna z-ROI [5000, 4230) is empty (store z size 4230)
-```
-   with `lasagna_scale: 2` (the workflow post's own example value) against
-   PHerc0826's actual lasagna store — group `"2"` is a real 4x downsample
-   for this scroll (confirmed from `PHerc0826_nx.ome.zarr`'s own `.zattrs`
-   multiscales metadata, not assumed), not 2x. Fixed with `lasagna_scale: 4`
-   — verified: the fit ran end-to-end afterward, 642,640 tracks loaded, loss
-   955.9→747.7 over 1500 steps.
-
-**Why / where this is useful:** TODO(human)
+**Why / where this is useful:** Anyone bringing up a scroll other than the
+published PHercParis4 dataset has to write this file, and right now the
+fastest route to it is guessing from error messages. The silent-wrong-
+resolution case is the one worth documenting: it doesn't fail, it just fits
+against the wrong data. This section would have saved us most of a day.
 
 - [x] I personally verified that the example and proof above were produced
       by this PR on the stated data. (Round terminal, 2026-08-27, real box
@@ -134,20 +137,22 @@ Example (PHerc0826, group "2" == 4x downsample for this scroll specifically):
 remains undocumented upstream (dossier D-33) — this PR documents the
 schema requirement, not a determination procedure. See `02c_f3_preflight.md`
 in this repo's "CW/ACW: settled — the full determination saga" section for
-how we resolved it for our own scroll (four methods tried; the winning one
-was a mirror-mechanism finding in `transforms.py` plus a geometric overlay
-of the fitted mesh against the real CT slice, confirmed again at full
-30,000-step convergence) — offered as a worked example, not a general
-procedure this PR claims to establish.
+how we resolved it for our own scroll — offered as a worked example, not a
+general procedure this PR claims to establish.
+
+**Disclosure:** We're a two-person team and we worked with an LLM assistant
+on this, including the diagnosis and the patch. We directed the work, ran
+everything on real PHerc0826 data, and checked the evidence ourselves
+before opening this.
 
 ---
 ### Internal checklist (not part of the upstream PR — delete before submitting)
 - [ ] Error screenshot attached (terminal or in-tool) — not required for a
       docs PR per CONTRIBUTING (D-13 scopes this to bugfix PRs), included
-      as proof item 1/3 above anyway since it was captured for free
+      as proof items 1-3 above anyway since it was captured for free
 - [x] Demonstrated on real scroll data, not synthetic/toy (D-14)
-- [x] LLM-assisted diagnosis and fix — human-written commentary required
-      (D-15): motivation prose above (TODO(human)) is that commentary
+- [x] LLM-assisted diagnosis and fix — human-written commentary added
+      (D-15): disclosure paragraph above
 - [x] Candidate wall-log entry: `logs/` (E5) — fact material at
       `logs/2026-08-27-spiral-fit-run-stats.md`; human TIL prose still needed
 - [ ] Linked from `README.md` PR list once opened

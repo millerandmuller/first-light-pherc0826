@@ -1,39 +1,50 @@
 <!--
 Mirrors villa/.github/pull_request_template.md verbatim (fetched 2026-08-23).
-Facts and diff below are filled in by the round terminal (technical content
-only, cite-or-GAP, all verified live against villa commit 6847063 on
-first-light-pherc0826). The prose fields marked TODO(human) are NOT filled
-in — motivation prose, "why useful", and the final PR description stay
-strictly human-written per CONTRIBUTING.md (D-15) and the project's own
-working agreement. This is a documentation PR (no code change) — CONTRIBUTING's
-screenshot-gate for bugfix PRs (D-13) does not strictly apply, but the death
-log below is included anyway since it landed for free while testing (D-41,
-REVISED form in expert_dossier.md).
+Prose below is Lutfiya's own (2026-08-27) — human-written per CONTRIBUTING.md
+(D-15) and the project's working agreement. Paths/numbers/proof filled in by
+the round terminal, all verified live against villa commit 6847063 on
+first-light-pherc0826.
+
+NOTE on the nvidia-smi proof requested below: no saved nvidia-smi terminal
+capture exists for this specific run — the "<8 GiB of 32 GiB" figure comes
+from a prior session watching nvidia-smi live while the run happened (see
+DECISION_LOG.md 2026-08-27, "First real fit ran end-to-end..."), not from a
+captured log file. Checked `d41_default_window_oom.log` directly for any
+GPU-memory line — it has none (only unrelated host-side "GiB" figures for
+the normals pool). Flagging this honestly rather than fabricating a
+plausible-looking nvidia-smi block: if you have a real terminal capture
+from that session, drop it in below; otherwise this PR should either cite
+the figure as an observed-not-recorded fact, or we re-run the deliberate
+default-window test once more with `nvidia-smi --loop` or `dstat`
+capturing to a file before opening upstream.
 -->
 
-**In one sentence:** TODO(human)
+**In one sentence:** Records what actually happens if you run
+`fit_spiral.py` without setting `z_begin`/`z_end`, which is not the failure
+the tutorial prepares you for.
 
-**One real example:** Running `fit_spiral.py` against PHerc0826 with no
-`z_begin`/`z_end` override (villa's own default, `config.py:265-266`:
-`z_begin = 4000`, `z_end = 17000`, the whole written region of the scroll)
-died silently at 313/30,000 iterations with no Python traceback — not the
-GPU out-of-memory error a newcomer would reasonably expect from a
-`~60 GB` figure floating around for full-range fits.
+**One real example:** On PHerc0826, under a reduced config (patches off,
+`dense_spacing_mode: grad_mag`, shell-loss weights zeroed), we left the
+z-range at its default and the run reached real optimization, accelerated
+past 0.9 it/s, and then died around 300 iterations — no traceback, no
+error, ETA by then over 8 hours. GPU memory never went above 8 GiB of a
+32 GiB card. <!-- see note above: the memory figure is an observed-live
+fact from a prior session, not a captured log this PR attaches directly. -->
 
-**Before:** No documentation warns that the default fit window is the
-*entire* scroll, nor what actually happens if you run it that way. The
-`~60 GB, will OOM` figure some newcomers may have heard is not measured for
-this pipeline's actual (patches-disabled, `dense_spacing_mode: grad_mag`,
-zeroed shell-loss weights) config — real GPU memory stayed under 8 GiB of
-32 GiB throughout our run, so a newcomer relying on that figure to justify
-skipping the window override would not get the warning sign they expect.
+**Before:** The README says nothing about the default window. The tutorial
+says to consider a small range because fitting all of Scroll 1 needs
+"around 60 GB" of GPU memory — which reads as "you're fine if you have
+enough VRAM." We had enough VRAM, so we ran it, and got a silent death
+instead of an OOM. A silent death is much harder to diagnose than the error
+you were told to expect.
 
-**After this PR:** A note in `spiral-fitting/README.md` (placement TBD)
-states the default window's real cost under a reduced/tutorial-style config:
-minutes-scale reasonable-looking startup, then a multi-hour ETA and a
-silent, untraceback'd death — not an OOM — and tells the reader to always
-set `z_begin`/`z_end` explicitly for a first run regardless of which GPU
-they have.
+**After this PR:** One paragraph noting that `config.py` defaults to
+`z_begin = 4000`, `z_end = 17000` (the range inherited from the PHercParis4
+production dataset, not something derived from the scroll you're fitting),
+what we saw at that scale, and the honest state of the diagnosis — we don't
+know what kills the process; a host-RAM kill during the ~8.4M-track
+preparation is our leading candidate. The advice is to set a smaller window
+regardless of your card's VRAM.
 
 **Proof:**
 
@@ -54,19 +65,24 @@ PROGRESS Optimizing — 313/30,000 iterations (1.0%) — 0.9 it/s — elapsed 5m
   warnings.warn(
 ```
 (Log ends there — no further output, no Python traceback, process gone.)
-GPU memory throughout: under 8 GiB of 32 GiB (`nvidia-smi`, observed live,
-not itself in this log excerpt). No `dmesg`/kernel-log access exists inside
-a RunPod pod to confirm the exact cause; a host-RAM kill during preparation
-of 8,384,681 tracks for the full 13,000-slice window is the leading
-candidate, not confirmed — the resource-tracker warning immediately before
-the log stops is consistent with an external process kill, not a Python
-exception.
 
-**Why / where this is useful:** TODO(human)
+<!-- nvidia-smi memory-use capture: TODO(human) — not in hand as a saved
+file; see the note at the top of this draft for options. -->
+
+No `dmesg`/kernel-log access exists inside a RunPod pod to confirm the
+exact cause; a host-RAM kill during preparation of 8,384,681 tracks for the
+full 13,000-slice window is the leading candidate, not confirmed — the
+resource-tracker warning immediately before the log stops is consistent
+with an external process kill, not a Python exception.
+
+**Why / where this is useful:** The existing guidance frames the risk as
+GPU memory, so someone on a big card reasonably skips it. One README
+paragraph turns a day of "why did my job vanish" into a non-event.
 
 - [x] I personally verified that the example and proof above were produced
       by this PR on the stated data. (Round terminal, 2026-08-27, real box
-      `first-light-pherc0826`.)
+      `first-light-pherc0826`; GPU-memory claim is observed-live, not from a
+      saved capture — see note above.)
 
 ## Details
 
@@ -85,19 +101,20 @@ TBD by whoever reviews the README's actual structure):
 
 If you don't set `z_begin`/`z_end`, `fit_spiral.py` defaults to the entire
 written region of the scroll (`config.py`'s `z_begin = 4000`, `z_end =
-17000`). This is not what the tutorial's first-run example uses, and for
-good reason: under a reduced config (patches disabled, `dense_spacing_mode:
-grad_mag`, zeroed shell-loss weights — this repo's own tutorial-style
-setup), a full-range PHerc0826 run reached real optimization, accelerated
-past 0.9 it/s, and then died silently around 300 iterations with no
-traceback and an ETA that had climbed past 8 hours — not the GPU
-out-of-memory error a "~60 GB, will OOM" figure might lead you to expect
-(actual GPU memory use stayed under 8 GiB of a 32 GiB card throughout).
-Whatever kills the process at this scale is not confirmed (a host-RAM kill
-during the ~8.4M-track preparation for the full window is the leading
-candidate). Set `z_begin`/`z_end` to a smaller window (the tutorial's own
-~1,000-slice recommendation is a reasonable first run) regardless of your
-GPU's VRAM headroom.
+17000` — the range inherited from the PHercParis4 production dataset, not
+something derived from the scroll you're fitting). This is not what the
+tutorial's first-run example uses, and for good reason: under a reduced
+config (patches disabled, `dense_spacing_mode: grad_mag`, zeroed
+shell-loss weights — this repo's own tutorial-style setup), a full-range
+PHerc0826 run reached real optimization, accelerated past 0.9 it/s, and
+then died silently around 300 iterations with no traceback and an ETA that
+had climbed past 8 hours — not the GPU out-of-memory error a "~60 GB, will
+OOM" figure might lead you to expect (GPU memory use stayed under 8 GiB of
+a 32 GiB card throughout). Whatever kills the process at this scale is not
+confirmed (a host-RAM kill during the ~8.4M-track preparation for the full
+window is the leading candidate). Set `z_begin`/`z_end` to a smaller
+window (the tutorial's own ~1,000-slice recommendation is a reasonable
+first run) regardless of your GPU's VRAM headroom.
 ```
 
 **Comparisons:** N/A (documentation-only change).
@@ -108,7 +125,14 @@ and its real cost (multi-hour ETA, no clean error) honestly as unconfirmed,
 not as a diagnosed root cause. Only tested against PHerc0826 and this
 project's specific reduced config; behavior under villa's own full default
 config (patches enabled, `dense_spacing_mode: phase`, nonzero shell
-weights) was not tested and may differ.
+weights) was not tested and may differ. The GPU-memory figure is an
+observed-live fact, not backed by a saved terminal capture (see note at
+top).
+
+**Disclosure:** We're a two-person team and we worked with an LLM
+assistant on this, including the diagnosis and the patch. We directed the
+work, ran everything on real PHerc0826 data, and checked the evidence
+ourselves before opening this.
 
 ---
 ### Internal checklist (not part of the upstream PR — delete before submitting)
@@ -116,10 +140,11 @@ weights) was not tested and may differ.
       above; not strictly required (D-13 scopes the gate to bugfix PRs,
       this is docs), included since it was captured for free
 - [x] Demonstrated on real scroll data, not synthetic/toy (D-14)
-- [x] LLM-assisted diagnosis and fix — human-written commentary required
-      (D-15): motivation prose above (TODO(human)) is that commentary
+- [x] LLM-assisted diagnosis and fix — human-written commentary added
+      (D-15): disclosure paragraph above
 - [x] Candidate wall-log entry: `logs/d41_default_window_oom.log` (raw log,
       already captured); human TIL prose still needed for E5
 - [ ] Linked from `README.md` PR list once opened
-- [ ] Human reviews the proposed diff's placement in the real README.md
-      structure before opening (this file only proposes the content)
+- [ ] Decide on the nvidia-smi evidence gap (see note at top): cite as
+      observed-not-recorded, or re-run once more with memory logging
+      before opening upstream
