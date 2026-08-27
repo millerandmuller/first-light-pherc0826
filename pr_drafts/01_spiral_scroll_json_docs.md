@@ -41,11 +41,23 @@ overrides).
 ```
 (`fit_session.py:705`, reproduced live 2026-08-27.)
 
-2. Schema-validation-passing screenshot: once `spiral-scroll.json` was
-   written correctly, re-running got past all schema checks and into real
-   optimization (`PROGRESS Optimizing — .../30,000 iterations`) — no
-   remaining `ScrollSpecError`. Screenshot TODO(human) — take from
-   `logs/real_windowed_fit2.log` or a fresh terminal capture.
+2. Schema-validation-passing, full run to convergence (real, captured
+   2026-08-27, `logs/real_windowed_fit_CW_30k.log`): once `spiral-scroll.json`
+   was written correctly, the fit got past every schema check and ran the
+   full 30,000-step optimization to completion — no remaining
+   `ScrollSpecError`, no OOM, no silent death:
+   ```
+   PROGRESS Optimizing — 0/30,000 iterations (0.0%) — elapsed 0s
+   ...
+   step 29800: loss = 333.1, umbilicus = 0.0, sym_dirichlet = 38.2, dense_normals = 7.0, min_spacing = 0.0, track_radius = 185.7, track_dt = 102.3
+   satisfied_tracks = 92579/642640 (14.4%)
+   satisfied_track_points = 18215660/33967984 (53.6%)
+   save_mesh fitted: winding range [10, 130)
+   ```
+   Loss fell 955.9 → stable ~330-340 (plateaued, not still descending —
+   genuine convergence). Wall-clock 29m49s on one RTX PRO 4500 32GB.
+   Screenshot TODO(human) if a rendered image is wanted in addition to this
+   log excerpt.
 
 3. `normal_zarr_group`/`lasagna_scale` bug, reproduced live:
 ```
@@ -121,9 +133,12 @@ Example (PHerc0826, group "2" == 4x downsample for this scroll specifically):
 **Limitations:** The `spiral_outward_sense` determination method itself
 remains undocumented upstream (dossier D-33) — this PR documents the
 schema requirement, not a determination procedure. See `02c_f3_preflight.md`
-in this repo for the round terminal's own (inconclusive, honestly reported)
-attempts at computing it from track data and comparing fit loss between
-`"CW"`/`"ACW"`.
+in this repo's "CW/ACW: settled — the full determination saga" section for
+how we resolved it for our own scroll (four methods tried; the winning one
+was a mirror-mechanism finding in `transforms.py` plus a geometric overlay
+of the fitted mesh against the real CT slice, confirmed again at full
+30,000-step convergence) — offered as a worked example, not a general
+procedure this PR claims to establish.
 
 ---
 ### Internal checklist (not part of the upstream PR — delete before submitting)
@@ -133,7 +148,8 @@ attempts at computing it from track data and comparing fit loss between
 - [x] Demonstrated on real scroll data, not synthetic/toy (D-14)
 - [x] LLM-assisted diagnosis and fix — human-written commentary required
       (D-15): motivation prose above (TODO(human)) is that commentary
-- [ ] Candidate wall-log entry: `logs/` (E5)
+- [x] Candidate wall-log entry: `logs/` (E5) — fact material at
+      `logs/2026-08-27-spiral-fit-run-stats.md`; human TIL prose still needed
 - [ ] Linked from `README.md` PR list once opened
 - [ ] Human reviews the proposed diff's placement in the real README.md
       structure before opening (this file only proposes the content)
