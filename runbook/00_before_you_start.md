@@ -13,12 +13,40 @@ for the nearest equivalent rather than assuming something's wrong.
 
 ## 1. Provision the RunPod box
 
-Target: **Secure Cloud**, **RTX A6000 48GB**, **200GB network volume**, region
-EU if available (per `project_brief.md` AI Runtime Profile). Budget cap: 150
-USD total, per the brief. Approximate pricing from earlier research
-(`DECISION_LOG.md`, "GPU rental research" entry) — verify current prices
-before deploying, they drift: ~$0.53/hr for the GPU, ~$0.07/GB/month for the
-first 1TB of network volume storage (~$14/month for 200GB, prorated).
+Target: **Secure Cloud**, data center **EU-RO-1**, **200GB network volume**,
+GPU chosen at deploy time — the volume locks the *region*, not the card, so
+any EU-RO-1 GPU can attach to the same volume and be swapped between sessions
+for free. First pick: **RTX PRO 4500 32GB** ($0.72/hr as of 2026-08-27) if
+its Blackwell (sm_120) stack passes a first-boot check (torch imports, one
+small fit step runs, the Triton kernels compile); otherwise fall back to the
+**RTX 4090 24GB** ($0.74/hr), Ada (sm_89), whose wheel-level compatibility is
+already verified. Budget cap: 150 USD total, per the brief. Network volume:
+$0.07/GB/month for the first 1TB (~$14/month for 200GB, prorated). Re-verify
+prices and capacity on the deploy page immediately before deploying; both
+drift within hours.
+
+> **Why not the A6000 48GB this file originally specified:** on 2026-08-25 it
+> was unavailable (N/A) in all three data centers that carry it, so it could
+> not be rented at any price. The 48GB L40S alternative exists only in EU-NL-1
+> and costs $0.99/hr, which is $172 to the deadline and breaches the 150 USD
+> cap. 24GB is sufficient for this workload: the largest step is the spiral
+> fit, at an inferred 5-9 GiB for a ~1,000-slice window; ink inference needs
+> 1-2 GB; flatten and render are not GPU-bound. EU-RO-1 was chosen over
+> US-IL-1 (closer to the us-east-1 data bucket) because a RunPod network
+> volume is region-locked at creation and the deploy page's Available tab
+> showed six deployable cards in EU-RO-1 versus zero in US-IL-1 (2026-08-25,
+> re-confirmed 2026-08-27). Do not trust the storage page's per-GPU
+> availability badges: they disagree with the deploy page in both directions
+> (a card badged "Low" was undeployable everywhere; a card badged "N/A" was
+> deployable); only the deploy page, read immediately before deploying, is
+> actionable. RunPod charges nothing for ingress, so a slow
+> first sync costs hours once, whereas a volume stranded in a data center with
+> no attachable GPU during deadline week costs the deliverable.
+
+> **Trap before your first fit** (`spiral-fitting/config.py:265-266`): the fit
+> window defaults to `z_begin = 4000`, `z_end = 17000` — the whole written
+> region, which needs ~60 GB of GPU memory. You MUST set `Z_BEGIN`/`Z_END`
+> explicitly or the run will OOM on any rentable consumer card.
 
 1. **Create the network volume first, before deploying a pod** — RunPod
    requires this: a network volume can only be attached at pod-deployment
