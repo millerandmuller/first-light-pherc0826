@@ -1,21 +1,16 @@
 <!--
-DRAFT, not the prereg itself. Grounded in prereg/fact_package.md and
-expert_dossier.md, proposed by the round terminal 2026-08-27 for Lutfiya to
-read, edit, and commit herself as prereg/readout.md — that commit is the
-actual preregistration act (E4), and it must happen BEFORE any inference
-runs on the target window (hard gate, unchanged).
-
-Everything below is a PROPOSAL. Change any number, any wording, any
-threshold. The Verdict section at the bottom is intentionally empty and
-CANNOT be filled in yet — it gets written after F5 actually runs, using
-whatever criteria you commit to here, and it must be written by you
-(project rule, no exceptions — see project_brief.md Section 8).
+E4 preregistration. Reviewed and approved by Lutfiya 2026-08-27; the
+initial commit of this file is the preregistration act, made BEFORE any
+inference on the target window. The Calibration section is filled from the
+control run (which precedes target inference); the False-positive statement
+and the Verdict are written after inference. The criteria themselves are
+never edited retroactively.
 -->
 
 # Preregistration — PHerc0826, window1 (z 10000-11000, inner windings w010-w065)
 
-Committed: [date, before target inference runs]
-Commit hash: [fill after `git commit`, then reference it in README]
+Committed: 2026-08-27 (before any target inference; see git log)
+Commit hash: filled in the follow-up commit immediately after this file's initial commit; both referenced in the README's Proof beat.
 
 ## Scope
 
