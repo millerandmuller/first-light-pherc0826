@@ -64,21 +64,68 @@ if [ -z "$RUN_DIR" ] || [ ! -d "$RUN_DIR/meshes/fitted" ]; then
 fi
 MESHES_DIR="$RUN_DIR/meshes/fitted"
 
+# Optional winding-range scope restriction (prereg/readout.md Scope section:
+# F5's target run is restricted to the well-covered inner windings, not the
+# full fitted range). render_ink.py concatenates every wNNN_spliced dir it
+# finds directly under its meshes_dir argument, with no winding-range filter
+# of its own (spiral-fitting/render_ink.py: `for name in os.listdir(meshes_dir)
+# if '_spliced' in name`). To scope the render, point it at a directory of
+# symlinks to only the wanted _spliced dirs instead of the full fitted dir —
+# render_ink.py's is_tifxyz()/winding_idx() checks use os.path.isdir /
+# os.path.exists, which resolve symlinks transparently, so this needs no
+# copying. Set both WINDING_MIN and WINDING_MAX (e.g. 10 and 65) to scope;
+# leave both unset to render the full fitted range (unscoped default).
+if [ -n "${WINDING_MIN:-}" ] || [ -n "${WINDING_MAX:-}" ]; then
+  : "${WINDING_MIN:?WINDING_MIN and WINDING_MAX must both be set to scope the winding range}"
+  : "${WINDING_MAX:?WINDING_MIN and WINDING_MAX must both be set to scope the winding range}"
+  SCOPE_TAG=$(printf 'w%03d-%03d' "$((10#$WINDING_MIN))" "$((10#$WINDING_MAX))")
+  SCOPED_DIR="$RUN_DIR/meshes/fitted_scoped_$SCOPE_TAG"
+  mkdir -p "$SCOPED_DIR"
+  find "$SCOPED_DIR" -maxdepth 1 -type l -delete
+  N_LINKED=0
+  for d in "$MESHES_DIR"/w*_spliced; do
+    [ -d "$d" ] || continue
+    name=$(basename "$d")
+    widx=$(echo "$name" | grep -oE '^w[0-9]+' | tr -d 'w')
+    widx=$((10#$widx))
+    if [ "$widx" -ge "$((10#$WINDING_MIN))" ] && [ "$widx" -le "$((10#$WINDING_MAX))" ]; then
+      ln -sfn "$d" "$SCOPED_DIR/$name"
+      N_LINKED=$((N_LINKED + 1))
+    fi
+  done
+  if [ "$N_LINKED" -eq 0 ]; then
+    echo "No _spliced windings found in [$WINDING_MIN, $WINDING_MAX] under $MESHES_DIR" >&2
+    exit 1
+  fi
+  echo "Scoped render input: $N_LINKED windings ($SCOPE_TAG) symlinked into $SCOPED_DIR"
+  MESHES_DIR="$SCOPED_DIR"
+fi
+
 # Fix (round terminal, 2026-08-27, real box): render_ink.py's own --volume
 # flag has no --remote-url companion (confirmed by reading its full --help —
 # no such option exists), so its internal vc_render_tifxyz call for the ink
 # composite step CANNOT stream a remote-only S3 volume: verified live, it
 # fails with the same "directory iterator cannot open directory" error
 # 05_render_tifxyz.sh hit before its own --remote-url fix. This is a real
-# gap in render_ink.py itself (villa PR candidate), not something fixable
-# from our side without patching villa's vendored script. render_ink.py's
-# concat+flatten+trim stages do NOT depend on --volume at all and are
-# verified working end-to-end on this box (produced a real w010-129_flat
-# tifxyz mesh from the 1,500-step CW run). So: let render_ink.py run and do
-# its real job (flatten); tolerate its own exit code being nonzero if that
-# failure is confined to its internal render step (checked below by
-# confirming *_flat exists regardless); then render the demo composite
-# ourselves with the same --remote-url pattern 05 uses.
+# gap in render_ink.py itself (villa PR candidate #1627), not something
+# fixable from our side without patching villa's vendored script. A local
+# --remote-url patch matching #1627 exists on this box's vendored copy
+# (uncommitted `git diff` in $VILLA_DIR) and was verified standalone (exit
+# 0, real S3 stream, full composite written) — but NOT through this script
+# or against a scoped/restricted MESHES_DIR, so this script intentionally
+# keeps using the fallback path below rather than switching to the patched
+# one this close to the deadline: F4 already completed end-to-end on this
+# exact fallback path (real legible composite output, window1-full 30k fit),
+# and re-verifying a new code path isn't worth the risk right now. If time
+# allows later, wiring VOLUME_CACHE_DIR + --remote-url into the render_ink.py
+# call below and dropping this fallback would remove the redundant second
+# render. render_ink.py's concat+flatten+trim stages do NOT depend on
+# --volume at all and are verified working end-to-end on this box (produced
+# a real w010-129_flat tifxyz mesh from the 1,500-step CW run). So: let
+# render_ink.py run and do its real job (flatten); tolerate its own exit
+# code being nonzero if that failure is confined to its internal render step
+# (checked below by confirming *_flat exists regardless); then render the
+# demo composite ourselves with the same --remote-url pattern 05 uses.
 set +e
 pushd "$VILLA_DIR/spiral-fitting" >/dev/null
 uv run python render_ink.py "$MESHES_DIR" \
