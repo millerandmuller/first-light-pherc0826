@@ -25,19 +25,48 @@ set -euo pipefail
 
 : "${SCROLL:?SCROLL required}"
 : "${RUN_TAG:?RUN_TAG required}"
-FLATTEN_DIR="$(pwd)/runbook/out/$SCROLL/$RUN_TAG/flatten"
-SEGMENTATION="$FLATTEN_DIR/tifxyz/flatten.tifxyz"
+VC_BIN_DIR="${VC_BIN_DIR:-/usr/local/bin}"
+
+# Fix (round terminal, 2026-08-27, real box): this used to assume
+# villa/lasagna's fit.py writes $FLATTEN_DIR/tifxyz/flatten.tifxyz. That path
+# was never confirmed against source and is now known wrong — 04's rewrite
+# uses render_ink.py, which does its own full-scroll concat + lasagna
+# flatten and writes the trimmed result to
+# meshes/fitted/concat/<winding-range>_flat/{meta.json,x/y/z.tif} (exact
+# winding-range name depends on the fit's actual winding span, hence the
+# glob below rather than a hardcoded name). Run 04_lasagna_flatten.sh first.
+SPIRAL_OUT="$(pwd)/runbook/out/$SCROLL/$RUN_TAG/spiral-fit"
+RUN_DIR=$(find "$SPIRAL_OUT" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' 2>/dev/null \
+  | sort -rn | head -1 | cut -d' ' -f2-)
+SEGMENTATION=$(find "${RUN_DIR:-/nonexistent}/meshes/fitted/concat" -maxdepth 1 -type d -name '*_flat' 2>/dev/null | head -1)
+if [ -z "$SEGMENTATION" ]; then
+  echo "No *_flat tifxyz directory found under $SPIRAL_OUT/*/meshes/fitted/concat — run runbook/04_lasagna_flatten.sh first." >&2
+  exit 1
+fi
 OUT_DIR="$(pwd)/runbook/out/$SCROLL/$RUN_TAG/render"
 mkdir -p "$OUT_DIR"
 
-# TODO(F1/F2): point --volume at the scroll's actual OME-Zarr on the open S3
-# bucket once the scroll pick (F1) and voxel size are confirmed — see
-# runbook/01_scroll_selection.md. Placeholder path below WILL fail; that is
+# TODO(F1/F2): point VOLUME_ZARR at the scroll's actual OME-Zarr on the open
+# S3 bucket once the scroll pick (F1) and voxel size are confirmed — see
+# runbook/01_scroll_selection.md. Placeholder value below WILL fail; that is
 # intentional (fail loud, don't silently render the wrong volume).
 VOLUME_ZARR="${VOLUME_ZARR:?set VOLUME_ZARR to the target s3://vesuvius-challenge-open-data/... zarr path from F1}"
 
-vc_render_tifxyz \
-  --volume "$VOLUME_ZARR" \
+# Fix (round terminal, 2026-08-27, real box): `--volume "$VOLUME_ZARR"` alone
+# (a bare s3:// string) fails live: `Error opening local zarr: filesystem
+# error: directory iterator cannot open directory: No such file or
+# directory [s3://...]` — vc_render_tifxyz's --volume is a LOCAL path; remote
+# streaming needs --remote-url alongside it. Confirmed against
+# scrollprize.org/docs/07_tutorial5.md's own worked example (`--volume
+# volume-cache/<name>.zarr --remote-url s3://...`) and verified live on this
+# box: a real render against PHerc0826's raw volume progressed normally with
+# both flags set together. `--volume` names a local directory that vc_render
+# streams needed chunks into: does not need to pre-exist or be pre-populated.
+VOLUME_CACHE_DIR="${VOLUME_CACHE_DIR:-$(pwd)/volume-cache/$SCROLL.zarr}"
+
+"$VC_BIN_DIR/vc_render_tifxyz" \
+  --volume "$VOLUME_CACHE_DIR" \
+  --remote-url "$VOLUME_ZARR" \
   --group-idx 0 \
   --scale 1 \
   --segmentation "$SEGMENTATION" \

@@ -285,6 +285,69 @@ the model's actual predicted geometry from the raw checkpoint tensors
 literal output shapes directly would resolve this properly, but is
 real additional engineering — checked in before attempting it.
 
+### CW/ACW: settled — the full determination saga
+
+Four independent methods were tried, in order, before this resolved:
+
+1. **Visual read off rendered slices** — failed. Three cross-model votes
+   split (CW/ACW/ambiguous) and the advisor's own zoomed-crop read concluded
+   the call is genuinely unresolvable at this resolution: heavy deformation
+   makes both winding senses locally look alike, and the umbilicus marker
+   glyph occluded the one decisive feature (the innermost sheet
+   termination).
+2. **Per-track `dr/dtheta` polar-unwind regression** — flat, no signal.
+   Computed directly from the tracks `.dbm` (not guessed): sign of the
+   radius-vs-angle slope came back ~50/50 in every z-band tested (5000,
+   9000, 13000), robust to filtering down to the longest, most
+   angularly-swept tracks. Root cause: even the 99th-percentile track only
+   sweeps ~39° of arc, far under one full turn, so local papyrus waviness
+   dominates the true secular per-turn radius growth at that baseline.
+3. **Loss/satisfaction comparison between a CW and an ACW 1500-step fit** —
+   also flat (see above): loss and `satisfied_tracks` came back
+   statistically indistinguishable between the two senses.
+4. **The mirror mechanism, found by reading the code the label actually
+   reaches** — `spiral-fitting/transforms.py:522-527`: `CW` inserts no
+   transform; `ACW` inserts `AffineTransform(scale=[1,1,-1])`, a literal
+   x-axis mirror flip, with villa's own code comment confirming the intent
+   ("to make spiral go anticlockwise... flip it horizontally"). This
+   explains methods 2 and 3's negative results: mirror symmetry preserves
+   every local-consistency loss term, so the optimizer converges equally
+   well under either label — a wrong sense is a real geometric mirror of
+   the fitted mesh, not a relabeling, and nothing about the fit's own
+   metrics can see it. It also meant the two 1500-step meshes already on
+   disk (from method 3) could resolve this directly: slice each mesh at a
+   real z inside the fitted window and overlay it on the true axial CT
+   slice (`overlay_mesh_on_slice.py`, z=10500, meshes hard-clipped to
+   z∈[10000,11000)) — a genuine geometric comparison against ground truth,
+   not another loss number. Read: **CW's bands transition smoothly across
+   the whole visible wrap structure; ACW matches closely on the left
+   two-thirds but shows a jagged, closely-spaced zigzag pattern around
+   x≈1300-2000** that does not match the visible fold there.
+   `mesh_overlay_z10500_CW_1500step.png` / `..._ACW_1500step.png`.
+
+**Provisional ruling (2026-08-27, advisor + round terminal independently):**
+CW, on three aligned signals (workflow-post example value, round terminal's
+own read, advisor's independent read of the same two images) plus the
+mirror mechanism explaining why methods 2-3 were structurally blind to the
+question. The full 30,000-iteration CW fit was authorized to convert this
+from "provisional" to "settled": if the *converged* mesh degraded into the
+same contortion signature ACW showed even at 1500 steps, the ruling would
+have escalated back to the user.
+
+**Confirmation — converged fit (2026-08-27, round terminal, fresh
+terminal):** the full 30,000-step CW fit (`RUN_TAG=window1-full`) converged
+cleanly — loss 955.9 → ~330-340 (stable, not still falling), no OOM, no
+silent death, `satisfied_tracks` improved 9.6% → 14.4% (92,579/642,640),
+`satisfied_track_points` 38% → 53.6%. Regenerated the z=10500 overlay from
+this converged mesh (`overlay_mesh_on_slice.py`, `CW_30000step_converged`
+entry) and compared it directly against the 1500-step ACW overlay: the same
+x≈1300-1900 region that showed ACW's jagged zigzag pattern is smooth and
+coherently nested in the converged CW mesh — the contortion signature did
+not appear at convergence. **`spiral_outward_sense = CW` is settled**, not
+provisional. `mesh_overlay_z10500_CW_30000step_converged.png` is the
+reference image; the 1500-step CW/ACW pair are kept alongside it as the
+saga's evidence trail, not superseded.
+
 **Path override values are relative to the dataset root** if not absolute
 (confirmed in `fit_session.py`'s `_normalise_path()` — a relative override
 gets joined to the dataset root; an absolute path is also accepted as-is).
