@@ -38,9 +38,17 @@ VC_BIN_DIR="${VC_BIN_DIR:-/usr/local/bin}"
 SPIRAL_OUT="$(pwd)/runbook/out/$SCROLL/$RUN_TAG/spiral-fit"
 RUN_DIR=$(find "$SPIRAL_OUT" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' 2>/dev/null \
   | sort -rn | head -1 | cut -d' ' -f2-)
-SEGMENTATION=$(find "${RUN_DIR:-/nonexistent}/meshes/fitted/concat" -maxdepth 1 -type d -name '*_flat' 2>/dev/null | head -1)
+# Fix (round terminal, 2026-08-28): 04_lasagna_flatten.sh's WINDING_MIN/MAX
+# scoping writes its output under meshes/fitted_scoped_wNNN-NNN/concat/ (see
+# that script), not meshes/fitted/concat/ — a bare 'fitted' glob here finds
+# nothing for a scoped run and fails silently downstream. Search two levels
+# under meshes/ (meshes/<fitted-or-scoped-dir>/concat/<range>_flat) so this
+# works for both, and pick the most recently written match by mtime, same
+# convention as RUN_DIR above, in case more than one exists.
+SEGMENTATION=$(find "${RUN_DIR:-/nonexistent}/meshes" -mindepth 3 -maxdepth 3 -type d -name '*_flat' -printf '%T@ %p\n' 2>/dev/null \
+  | sort -rn | head -1 | cut -d' ' -f2-)
 if [ -z "$SEGMENTATION" ]; then
-  echo "No *_flat tifxyz directory found under $SPIRAL_OUT/*/meshes/fitted/concat — run runbook/04_lasagna_flatten.sh first." >&2
+  echo "No *_flat tifxyz directory found under $SPIRAL_OUT/*/meshes/{fitted,fitted_scoped_*}/concat — run runbook/04_lasagna_flatten.sh first." >&2
   exit 1
 fi
 OUT_DIR="$(pwd)/runbook/out/$SCROLL/$RUN_TAG/render"
@@ -76,15 +84,27 @@ VOLUME_CACHE_DIR="${VOLUME_CACHE_DIR:-$(pwd)/volume-cache/$SCROLL.zarr}"
   --zarr-output "$OUT_DIR/segment.zarr"
 
 # Sanity check against the D-19 sparse-pyramid trap: refuse an all-black render.
+#
+# Fix (round terminal, 2026-08-28, real box): vc_render_tifxyz's --zarr-output
+# writes a multiscale GROUP (levels "0".."5", string keys), not a plain
+# array — confirmed live, same structure seen on every other --zarr-output
+# in this project (control.zarr, the published w035 surface volume). The
+# original `arr[0]` (integer index) tried to path-join an int into a zarr
+# Group key and crashed with a real Python TypeError (not a caught
+# D-19-style failure) — meaning this check has never actually run
+# successfully since 05 was written; it silently made 05 report a false
+# STAGE_EXIT even on a genuinely valid render. Index the level-0 array by
+# its string key instead.
 uv run --with numpy --with zarr python3 - "$OUT_DIR/segment.zarr" <<'PY'
 import sys
 import numpy as np
 import zarr
 
 path = sys.argv[1]
-arr = zarr.open(path, mode="r")
-sample = np.asarray(arr[0]) if hasattr(arr, "__getitem__") else None
-if sample is None or not np.any(sample):
+root = zarr.open(path, mode="r")
+level0 = root["0"] if hasattr(root, "__getitem__") and "0" in root else root
+sample = np.asarray(level0[0])
+if not np.any(sample):
     raise SystemExit(
         f"{path} looks all-black (dossier D-19: absent --group-idx level can "
         f"render all-black with exit 0). Check the level exists before trusting this output."
