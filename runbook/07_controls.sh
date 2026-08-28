@@ -28,6 +28,22 @@
 # (F1's control-segment pick, D-38, is source-verified but not yet fetched) —
 # fixed by inspection against the same confirmed pattern, not independently
 # re-executed for this specific script.
+#
+# Fix (round terminal, 2026-08-28, first real run): first live run against a
+# CONTROL_SEGMENT fetched from the HF ink-labels bucket (ink/0139/w035_...)
+# produced an all-zero prediction in both directions — root cause was that
+# mesh, NOT this script: it is registered to a different (~2.4um) PHerc0139
+# volume, not the one passed as CONTROL_VOLUME_ZARR (confirmed by comparing
+# its meta.json bbox against the live target volume's own .zattrs, and by
+# finding villa's tutorial5 fetches the SAME-named segment's geometry from a
+# different, per-volume-registered path:
+# s3://vesuvius-challenge-open-data/PHerc0139/segments/<id>/mesh/<id>-on-<volume>.tifxyz/).
+# CONTROL_SEGMENT must point at the registration matching CONTROL_VOLUME_ZARR,
+# not just the same segment name. Added --flip-normals below, also confirmed
+# missing against tutorial5's exact worked command: "reproduces the depth
+# orientation of the published renders and the training labels" — required
+# for the forward direction to be the informative one against ground truth
+# annotated on the canonically-oriented published render.
 set -euo pipefail
 
 : "${SCROLL:?SCROLL required — the target scroll, for output pathing}"
@@ -49,6 +65,7 @@ mkdir -p "$OUT_DIR"
   --num-slices 28 \
   --slice-step 1 \
   --cache-gb 16 \
+  --flip-normals \
   --zarr-output "$OUT_DIR/control.zarr"
 
 ATTEMPT_LOG="$OUT_DIR/control_inference_attempt1.log"

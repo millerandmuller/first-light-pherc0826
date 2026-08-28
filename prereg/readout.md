@@ -93,11 +93,64 @@ window.
 
 ## Calibration (filled from the control run, BEFORE target inference — an addition, not an edit of the criteria above)
 
-- Median ink probability on the control's labeled ink-stroke pixels: [fill
-  after control run]
-- Median ink probability on the control's non-labeled background pixels:
-  [fill after control run]
-- Date/commit of this addition: [fill]
+Forward direction (matches the published render's and training labels' fixed
+orientation — see Deviation note below):
+- Median ink probability on the control's labeled ink-stroke pixels: **0.7843**
+- Median ink probability on the control's non-labeled background pixels: **0.2235**
+- Separation: 0.5608
+
+Reverse direction (`--direction both`'s second output, same run):
+- Median ink probability on the control's labeled ink-stroke pixels: 0.2706
+- Median ink probability on the control's non-labeled background pixels: 0.2667
+- Separation: 0.0039 (no separation — expected: this render's orientation is
+  fixed and already matches training, so the reverse pass is the
+  "upside-down" direction for this specific control, not an ambiguous case
+  the way an unread target segment is)
+
+**Signal threshold (this prereg's criterion) = 0.7843**, the forward-direction
+median ink probability, computed identically from both (a) the officially
+published surface-volume render and (b) this repo's own `07_controls.sh`
+render of the same segment — the two agree to 4 decimal places.
+
+Both numbers cross-checked visually: the raw forward prediction
+independently reproduces legible letterforms, and the human ground-truth
+annotations land on top of them without being told where to look
+(`analysis/control-PHerc0139/side_by_side.png`, forward prediction |
+prediction with labels overlaid in red | labels alone).
+
+- Date/commit of this addition: 2026-08-28
+
+## Deviation note (added before any target inference, per the prereg's own commit-before-you-look rule; does not edit the Scope or criteria sections above)
+
+The control segment (PHerc0139/w035) was first fetched from the HF
+`scrollprize/datasets` bucket's `ink/0139/w035_2026031718/` path (per D-38).
+That mesh turned out to be registered to a different, ~2.4 µm PHerc0139
+volume, not the 9.362 µm volume this prereg's Scope targets — the first
+control run correctly came back all-zero in both directions (0% occupancy,
+0 patches selected), which is the control system working as designed: it
+caught a coordinate-frame mismatch before any target inference could run.
+
+Root cause and fix, verified against villa's own `scrollprize.org/docs/07_tutorial5.md`
+(the source the original w035 pick was based on) and a live S3 listing:
+segment geometry on the open-data bucket is registered per-volume, at
+`PHerc0139/segments/20260317000000-w035_2026031718/mesh/<id>-on-<volume>.tifxyz/`.
+Re-fetched the `-on-20250728140407-9.362um` registration (the correct one)
+and added the tutorial's `--flip-normals` flag to `07_controls.sh` (also
+missing from the original script). This eliminated the mismatch.
+
+Calibration source: rather than hand-writing a geometric remap between two
+differently-registered meshes (new, unverified code, rejected as the
+weakest option under deadline), used the model's own training-label tree
+(`scrollprize/datasets`, `ink_9um/labels/native9-scrollprizeorg-21slices/w035/`)
+together with the officially published, pre-rendered 9.362 µm surface
+volume for this exact segment
+(`PHerc0139/segments/20260317000000-w035_2026031718/surface-volumes/...zarr/`).
+Both are the model's own training data for this segment — zero new geometry
+code, labels valid by construction. Ran this repo's own inference runtime
+(same checkpoint, same CLI, `--direction both`) on that volume; independently
+re-ran the full `07_controls.sh` pipeline (our own render, `--flip-normals`,
+against the correctly-registered mesh) and got numerically identical medians
+— cross-validating both the calibration source and this repo's render step.
 
 ## Image requirements for any published render (D-03, D-05, D-08)
 - [ ] 1 cm scale bar. Derived: at native 9.362 µm/px, 1 cm ≈ 1,068 px; at
