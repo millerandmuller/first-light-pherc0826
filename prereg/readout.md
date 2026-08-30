@@ -218,7 +218,7 @@ confident the pipeline would have shown real ink because the same
 pipeline, minutes earlier, showed it clearly on the control.
 
 ## Verdict (one sentence, written after the check above, published verbatim in the README)
-[Not written. Cannot be written yet — no inference has run. This is the
-entire "Reveal" beat of the demo script (1.6) and must be human-written,
-after real results exist, per project_brief.md Section 8. No AI-generated
-verdict prose, no exceptions.]
+"I didn't see any ink in the window."
+
+(Lutfiya, 2026-08-30, written after the checks above; published verbatim
+in the README.)
