@@ -46,14 +46,44 @@ is the honest absence — say that, don't hedge it into sounding like more.
 
 | Step | Wall-clock | GPU-hours | Cost (USD) |
 |---|---|---|---|
-| Env setup (F2) | | | |
-| Spiral fit (F3) | | | |
-| Flatten + render (F4) | | | |
-| Ink inference (F5) | | | |
-| Controls (F6) | | | |
-| **Total** | | | (cap: $150) |
+| Env setup (F2) | not logged individually [1] | — | — |
+| Spiral fit (F3) | ~40-42 min* [2] | ~0.70* | ~$0.50* |
+| Flatten + render (F4) | ~56 min* (combined with F5) [3] | ~0.93* (combined) | ~$0.67* (combined) |
+| Ink inference (F5) | see F4 [3] | see F4 | see F4 |
+| Controls (F6) | not logged [4] | — | — |
+| **Total** | ~71h pod uptime | idle-dominated, not a compute-hours figure | **$55.70** (cap: $150) |
 
-Filled in from `logs/` after each real run — not estimated in advance.
+Filled in from `logs/` and the RunPod account balance after each real run.
+Cells marked `*` are estimates, not precise log timestamps.
+
+[1] `02_env_setup.sh` (apt-get + two `uv sync` runs) has no wall-clock captured anywhere.
+
+[2] Sum of all three real spiral-fit attempts: CW comparison (`window1`,
+1,500 steps, ~5-6 min, estimated from internal phase markers) + ACW
+comparison (`window1-ACW`, 1,500 steps, ~5-6 min, same estimation method) +
+the converged run actually used downstream (`window1-full`, 30,000 steps,
+precise: 29m49s / 0.497 GPU-hr / $0.36, tmux launch 19:07:10 UTC → log
+last-write 19:36:59 UTC, 2026-08-27). Source: `logs/2026-08-27-spiral-fit-run-stats.md`.
+
+[3] Render (F4 part 2) and inference (F5) ran together as one pipeline pass
+against the converged `window1-full`, w010-w065 scope, 2026-08-28. The only
+record is a wall-clock range, "roughly 17:12-18:08 UTC," without a
+per-stage split — the precise log this estimate would come from was never
+committed to this repo.
+
+[4] `07_controls.sh` was run for real at least twice against PHerc0139/w035
+(one attempt failed with an all-zero result from a mesh/volume registration
+mismatch; a second succeeded after fixing the mesh path and adding
+`--flip-normals`) — no wall-clock or cost was captured for either attempt.
+
+**Total spend:** account balance $80.19 → $24.49 = **$55.70** against the
+$150 cap. Pod was up continuously for ~71h at $0.72/hr ≈ $51 of that — the
+large majority of it idle, not running any of the pipeline steps above; the
+itemized real pipeline time in this table sums to under 2 hours. Network
+volume (200GB, prorated) ≈ $1.40. The remainder (~$3) is other minor
+pod-ledger disk charges, negligible. Lesson for the next person: stop your
+pod between sessions — nearly all of this project's spend was idle rental
+time, not compute.
 
 ## Reproduce it yourself
 

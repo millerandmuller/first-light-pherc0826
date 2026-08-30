@@ -3,8 +3,8 @@
 Gate for F3 (project_brief.md Section 3: "Resolve the umbilicus path, write the
 pick rationale. Gate for F3."). Everything below was checked directly against
 primary sources on 2026-08-23 by the round session (main loop, no forks, after
-the concurrency incident logged in `../../DECISION_LOG.md` in the Academy
-workspace — the earlier claim that F1 "research done" was false; this is the
+the concurrency incident logged in `../../DECISION_LOG.md` — the earlier
+claim that F1 "research done" was false; this is the
 real research).
 
 **Revision note (two rounds):** a first pass of this file missed two real
@@ -44,7 +44,7 @@ PHerc0813, PHerc0826.
 3. **Community umbilicus annotations (H-U hypothesis)** — initial web/GitHub
    search only surfaced `github.com/JamesDarby345/Umbilicus_Maker` (stale
    since October 2024, covers only Scroll 1-4). A peer session's field-recon
-   scan (`.academy/field/latest.json` in the Academy workspace) had two repos
+   scan (`.academy/field/latest.json`) had two repos
    this search missed; I independently re-verified both directly against
    their actual GitHub content (README + raw JSON), not the peer's summary of
    them — see below. **H-U is supported.**

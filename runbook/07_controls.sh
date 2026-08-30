@@ -4,8 +4,8 @@
 # NOT YET RUN. CONTROL_SCROLL / CONTROL_SEGMENT / CONTROL_VOLUME_ZARR are not
 # filled in here on purpose: which segment to use as the positive control is
 # a domain decision (GAP in expert_dossier.md — "held-out data issue" is
-# flagged as a pivot risk in project_brief.md 1.6). Resolve it via
-# /academy-expert or manual research before running this for real, then pin
+# flagged as a pivot risk in project_brief.md 1.6). Resolve it via internal
+# domain research or manual research before running this for real, then pin
 # the values below (or pass them as env vars) so the choice is reproducible.
 #
 # Fix (examiner_report.md P2): brought the OOM-detection fix from

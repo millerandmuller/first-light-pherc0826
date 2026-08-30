@@ -3,6 +3,9 @@
 Mirrors the maintainers' own First Letters workflow, one script per step.
 Entry point is the repo-root `Makefile` — run `make help`.
 
+References like D-21 cite our internal research log; public sources are
+linked inline where claims matter.
+
 **Start with `00_before_you_start.md`** — hands-on checklist for RunPod
 provisioning, env vars, Discord registration, and the umbilicus fetch, with
 the exact order to run everything below.
