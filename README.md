@@ -1,46 +1,78 @@
 # First Light — PHerc. 0826
 
-> Scroll pick from F1 (`runbook/01_scroll_selection.md`), backup PHerc0358.
-> Not locked: the umbilicus is unresolved (GAP) and pivot-trigger 1 in
-> project_brief.md H.W2 allows a scroll switch before feature freeze. Update
-> this title and the [TODO]s below only once F3 actually succeeds on the
-> chosen scroll — don't let the README get ahead of the pipeline.
-
-> STRUCTURE ONLY. Every narrative section below is `[TODO: human-written]` —
-> project_brief.md Section 8 (Dealbreakers) is explicit: "No AI-written prose
-> in PR motivations, README narrative, or verdicts — humans write all public
-> text." This file lays out where things go; a human fills in what actually
-> happened. Do not ship this file with any TODO still in it.
-
-We tried to read PHerc. 0[TODO] with the tools the Vesuvius team published on
-[TODO: workflow post date]. This is what worked, what broke, what it cost,
-and what we saw.
+We tried to read PHerc. 0826 with the tools the Vesuvius team published on
+August 18. This is what worked, what broke, what it cost, and what we saw.
 
 ## First public look
 
-[TODO: human-written] Banner render with a 1 cm scale bar. One sentence:
-scroll, Z-window, pipeline version. Nothing suggestive — see
-`prereg/readout.md` for what "ink" means here before you read the sentence
-under this image.
+![Flattened inside of PHerc. 0826, windings w010-w065 of slices 10,000-11,000, slab view with 1 cm scale bar](analysis/target-PHerc0826-window1-full-w010-065/slab_view_forward.png)
+
+This is the flattened inside of PHerc. 0826, windings w010–w065 of slices
+10,000–11,000 — the first rendered look inside this scroll that we know of.
+Pipeline: villa at commit `6847063`, spiral fit (30,000 steps) → lasagna
+flatten → `vc_render_tifxyz` → `ink_9um` inference, run as published, with
+the fixes linked below. Before reading anything into the image, see
+[`prereg/readout.md`](prereg/readout.md) for what we committed to count as
+ink — we wrote the rules before we looked.
 
 ## What broke on the way
 
-[TODO: human-written] Links to the villa PRs this run produced, before/after
-thumbnails per PR. Openness is the point, not a polished number — link open
-PRs too if that's honestly where things stand.
+Three walls, each now a villa PR with the real error and the fix:
+
+- [#1627](https://github.com/ScrollPrize/villa/pull/1627) — `render_ink.py`
+  had no way to reach a volume that only exists on S3; six-line
+  `--remote-url` passthrough, tested end-to-end on this scroll.
+- [#1628](https://github.com/ScrollPrize/villa/pull/1628) — the
+  `spiral-scroll.json` file the fitter requires is documented nowhere; we
+  reconstructed the schema from error messages one field at a time and
+  wrote it down, including the `lasagna_scale` value that fails confusingly
+  when copied from an example.
+- [#1629](https://github.com/ScrollPrize/villa/pull/1629) — the default fit
+  window is the entire scroll, and what actually happens then is a silent
+  death, not the out-of-memory error you'd expect.
+
+There was a fourth wall with no PR: nothing documents how to determine a
+scroll's winding sense. Visual inspection was ambiguous, a regression over
+180,000 track points had no signal, and the answer finally came from the
+code itself (the ACW setting is literally a mirror flip) plus overlaying
+both fitted meshes on the real slice. The full saga is in
+[`runbook/02c_f3_preflight.md`](runbook/02c_f3_preflight.md).
 
 ## What we actually see
 
-[TODO: human-written] Five-layer stack + both-direction predictions
-(`segment.tif`, `segment_reverse.tif`) beside the labeled positive control.
-One preregistered verdict sentence, committed in `prereg/readout.md` before
-this inference ran. State it plainly. If there's no ink signal, the verdict
-is the honest absence — say that, don't hedge it into sounding like more.
+![Same-scale comparison: control letterforms, target candidate 458, excluded artifact, plain texture — identical scale and normalization, 2 mm bars](analysis/target-PHerc0826-window1-full-w010-065/same_scale_comparison.png)
+
+**"I didn't see any ink in the window."**
+
+That's the preregistered verdict, published verbatim from
+[`prereg/readout.md`](prereg/readout.md). How we got there: the identical
+pipeline first ran on a control segment with published ground-truth labels
+(PHerc. 0139/w035, from the model's own training set — a pipeline check,
+not a generalization test). It reproduced legible letterforms with the
+labels landing on top, and gave us our threshold: 0.7843, the median
+probability on labeled ink. On the target, 23,569 of ~1.79 billion pixels
+crossed that threshold in both directions, forming nine candidates above
+our 0.5 mm size floor. Eight are sharp vertical bands at rendering
+boundaries — excluded by rules we committed in advance. The ninth is a
+0.55 mm diffuse patch that looks like the plain texture tile, not like the
+control's strokes. Every number and crop is in
+[`analysis/`](analysis/target-PHerc0826-window1-full-w010-065/); the audit
+trail is in [`prereg/readout.md`](prereg/readout.md).
+
+One disclosure we owe you next to these images: the checkpoint's inference
+patch is 128×128 px = 1.198 mm, larger than the 0.5×0.5 mm the prize page
+recommends for ML-generated images. It's the published checkpoint's fixed
+patch size, and we claim no letters from these outputs — but the number
+belongs here, not in a footnote.
 
 ## Proof
 
-[TODO: human-written] `prereg/` commit hash · audit table (link
-`analysis/false_positive_audit.md`) · time/cost table (below).
+- Criteria committed before target inference: `2b9425e` · calibration and
+  deviation note appended before target inference: see
+  [`prereg/readout.md`](prereg/readout.md) and this repo's history.
+- False-positive audit: [`prereg/readout.md`](prereg/readout.md)
+  (statement written after inference; criteria untouched since `2b9425e`).
+- Time and cost table below, filled from `logs/` and the account balance.
 
 ### Time and cost (E3)
 
@@ -87,29 +119,45 @@ time, not compute.
 
 ## Reproduce it yourself
 
+There's no honest one-liner yet — here's the real sequence. First, your
+scroll needs a hand-authored `spiral-scroll.json` in the dataset root
+(undocumented upstream; we wrote the schema down in
+[PR #1628](https://github.com/ScrollPrize/villa/pull/1628), including the
+one field you must read off your own store's metadata). Then, from the
+pinned config:
+
 ```
-make first-render SCROLL=PHerc0[TODO] Z_BEGIN=[TODO] Z_END=[TODO]
+bash runbook/03_spiral_fit.sh      # spiral fit (set Z_BEGIN/Z_END — see PR #1629 for why)
+bash runbook/04_lasagna_flatten.sh # flatten + render (needs PR #1627's --remote-url for S3 volumes)
+bash runbook/06_ink_inference.sh   # ink inference, both directions
 ```
 
-One command, F3 through F5, from the pinned config. See `runbook/` for the
-per-step scripts and their sources; see `Makefile` for the full target list.
+The full ten-step sequence with every export, timing, and failure mode is
+in [`runbook/`](runbook/) — written as we hit each wall, not reconstructed
+afterward.
 
 ## Real data, real fixes, documented for the next person
 
-[TODO: human-written] Links: runbook, PRs, Discord thread, submission form
-date.
+Runbook with every command, timing, and failure: [`runbook/`](runbook/).
+The three PRs above. We asked our open questions in the community before
+publishing:
+[whether no-ink renders may be published](https://discord.com/channels/1079907749569237093/1079907750265499772/1542535283625697290)
+(answered ["yep!"](https://discord.com/channels/1079907749569237093/1079907750265499772/1542549644482056243)
+by a maintainer within the hour) and
+[whether auto-closed PRs count for the monthly prize](https://discord.com/channels/1079907749569237093/1079907750265499772/1542535761679613952)
+(unanswered as of submission). Submitted to the August 2026 Progress Prize
+on [DATE — filled at submission].
+
+## How this was built (AI assistance disclosure)
+
+We're a two-person team and we worked with LLM assistants throughout: the
+runbook scripts, the failure diagnoses, the patches in the PRs above, the
+analysis code, and the first draft of this page were produced with heavy
+AI assistance, directed, reviewed, and edited by us against real scroll
+data. The verdict sentence above is human-written, and the preregistration
+commits to that in writing. Every claim on this page traces to a log or a
+commit you can check.
 
 ---
 
-License: MIT (from first commit, per project_brief.md Section H — Eligibility/Compliance).
-
-## Zero Academy components, ever
-
-This repo has its own git history, separate from the private Academy workspace,
-specifically so this rule is structural, not a promise: never `git add`
-anything from `directives/`, `execution/`, `Student (Prompt Architect)/`,
-`The Examiner/`, `The Revision/`, `The Creative Director/`, `The Expert/`,
-`academy_memory/`, `.academy/`, `expert_dossier.md`, `expert_consultations.md`,
-`project_brief.md`, `examiner_report.md`, `revision_log.md`, `DECISION_LOG.md`,
-or any other Academy-orchestration file. Those describe how the team worked,
-not the scientific result, and the brief bans them from any public surface.
+License: MIT.
