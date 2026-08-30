@@ -44,8 +44,7 @@ PHerc0813, PHerc0826.
 3. **Community umbilicus annotations (H-U hypothesis)** — initial web/GitHub
    search only surfaced `github.com/JamesDarby345/Umbilicus_Maker` (stale
    since October 2024, covers only Scroll 1-4). A peer session's field-recon
-   scan (`.academy/field/latest.json`) had two repos
-   this search missed; I independently re-verified both directly against
+   scan had two repos this search missed; I independently re-verified both directly against
    their actual GitHub content (README + raw JSON), not the peer's summary of
    them — see below. **H-U is supported.**
 4. **Volume ID / actual bucket key** — `scrollprize.org/prizes` shows a
